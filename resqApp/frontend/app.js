@@ -1,6 +1,25 @@
 // ==========================================
 // 1. YOUR FIREBASE CONFIG (Get this from Firebase Console -> Project Settings -> General -> Your Apps)
 // ==========================================
+function initializeResponsiveNavigation() {
+    const toggle = document.getElementById('nav-toggle');
+    const links = document.getElementById('primary-nav-links');
+    if (!toggle || !links) return;
+
+    toggle.addEventListener('click', () => {
+        const collapsed = links.classList.toggle('nav-collapsed');
+        toggle.setAttribute('aria-expanded', String(!collapsed));
+        toggle.querySelector('span').textContent = collapsed ? 'Open menu' : 'Close menu';
+        toggle.querySelector('[aria-hidden="true"]').textContent = collapsed ? '☰' : '✕';
+    });
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeResponsiveNavigation);
+} else {
+    initializeResponsiveNavigation();
+}
+
 const firebaseConfig = {
   apiKey: "AIzaSyDSLAcJQQvdU9sF1JLTc8SjxiPtOcP12VE",
   authDomain: "resq-mvp-44900.firebaseapp.com",
@@ -256,6 +275,9 @@ async function sendAIChatMessage() {
         });
 
         const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.error || `Chat request failed (${response.status}).`);
+        }
         
         // Remove loading state
         const loadingEl = document.getElementById(loadingId);
@@ -276,7 +298,7 @@ async function sendAIChatMessage() {
         
         messagesContainer.innerHTML += `
             <div class="bg-red-900/50 p-3 rounded-lg mr-auto max-w-[85%] text-white text-xs">
-                ⚠️ Error: Could not reach Snowflake backend server. Make sure your local server is running.
+                ⚠️ ${error.message || 'Could not reach the Snowflake backend. Make sure the server is running.'}
             </div>
         `;
     }

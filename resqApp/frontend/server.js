@@ -1,65 +1,99 @@
 const express = require('express');
 const snowflake = require('snowflake-sdk');
-const cors = require('cors'); // 1. Import CORS so your frontend can talk to this server
+const cors = require('cors');
 
 const app = express();
-app.use(express.json());
-app.use(cors()); // 2. Enable CORS for all incoming requests
+const port = Number(process.env.PORT || 3000);
+const maxMessageLength = 2000;
 
-// ==========================================
-// CONFIG: Replace these strings with your actual Snowflake credentials 
-// or set them as environment variables in your terminal before running.
-// ==========================================
-const connection = snowflake.createConnection({
-    account: process.env.SNOWFLAKE_ACCOUNT || 'http://xo60115.ap-southeast-7.aws/',
-    username: process.env.SNOWFLAKE_USER || 'imadfazli',
-    password: process.env.SNOWFLAKE_PASSWORD || 'imadfazli@12345',
-    warehouse: process.env.SNOWFLAKE_WAREHOUSE || 'COMPUTE_WH',
-    database: process.env.SNOWFLAKE_DATABASE || 'RESQ_DB',
-    schema: process.env.SNOWFLAKE_SCHEMA || 'PUBLIC'
+app.use(cors());
+app.use(express.json({ limit: '16kb' }));
+
+const normalizeAccount = (value = '') => value
+    .trim()
+    .replace(/^https?:\/\//i, '')
+    .replace(/\.snowflakecomputing\.com\/?$/i, '')
+    .replace(/\/$/, '');
+
+const config = {
+    account: normalizeAccount(process.env.SNOWFLAKE_ACCOUNT),
+    username: process.env.SNOWFLAKE_USER?.trim(),
+    password: process.env.SNOWFLAKE_PASSWORD,
+    warehouse: process.env.SNOWFLAKE_WAREHOUSE?.trim(),
+    database: process.env.SNOWFLAKE_DATABASE?.trim(),
+    schema: process.env.SNOWFLAKE_SCHEMA?.trim() || 'PUBLIC',
+    role: process.env.SNOWFLAKE_ROLE?.trim(),
+    model: process.env.SNOWFLAKE_CORTEX_MODEL?.trim() || 'llama3.1-70b'
+};
+
+const missingConfig = ['account', 'username', 'password', 'warehouse', 'database']
+    .filter((key) => !config[key]);
+let connection;
+let connectionState = missingConfig.length ? 'not_configured' : 'connecting';
+
+app.get('/api/health', (_req, res) => {
+    res.status(connectionState === 'connected' ? 200 : 503).json({ status: connectionState });
 });
 
-// 3. Establish the connection to Snowflake on startup
-connection.connect((err, conn) => {
-    if (err) {
-        console.error('❌ Failed to connect to Snowflake: ' + err.message);
-    } else {
-        console.log('✅ Connected to Snowflake Data Cloud successfully as ID: ' + conn.getId());
-    }
-});
+if (missingConfig.length) {
+    console.error(`Snowflake is not configured. Set: ${missingConfig.map((key) => ({
+        account: 'SNOWFLAKE_ACCOUNT', username: 'SNOWFLAKE_USER', password: 'SNOWFLAKE_PASSWORD',
+        warehouse: 'SNOWFLAKE_WAREHOUSE', database: 'SNOWFLAKE_DATABASE'
+    })[key]).join(', ')}`);
+} else {
+    connection = snowflake.createConnection({
+        account: config.account,
+        username: config.username,
+        password: config.password,
+        warehouse: config.warehouse,
+        database: config.database,
+        schema: config.schema,
+        ...(config.role ? { role: config.role } : {})
+    });
 
-// Chat API Endpoint for Snowflake Cortex AI
+    connection.connect((err, conn) => {
+        if (err) {
+            connectionState = 'disconnected';
+            console.error(`Snowflake connection failed: ${err.message}`);
+            return;
+        }
+
+        connectionState = 'connected';
+        console.log(`Connected to Snowflake (connection ${conn.getId()}).`);
+    });
+}
+
 app.post('/api/chat', (req, res) => {
-    const userMessage = req.body.message;
-    if (!userMessage) {
-        return res.status(400).json({ error: 'Message is required' });
+    const message = typeof req.body?.message === 'string' ? req.body.message.trim() : '';
+    if (!message) {
+        return res.status(400).json({ error: 'Message is required.' });
+    }
+    if (message.length > maxMessageLength) {
+        return res.status(413).json({ error: `Message must be ${maxMessageLength} characters or fewer.` });
+    }
+    if (connectionState !== 'connected') {
+        return res.status(503).json({ error: 'Snowflake is unavailable. Check the backend configuration and connection.' });
     }
 
-    const sqlStatement = `
-        SELECT SNOWFLAKE.CORTEX.COMPLETE(
-            'llama3-70b', 
-            'You are a helpful emergency response assistant for ResQ. Provide concise, safe instructions for: ' || ?
-        ) AS reply
-    `;
-
+    const prompt = `You are a helpful emergency response assistant for ResQ. Give concise, safe instructions for this situation: ${message}`;
     connection.execute({
-        sqlText: sqlStatement,
-        binds: [userMessage],
-        complete: (err, stmt, rows) => {
+        sqlText: 'SELECT SNOWFLAKE.CORTEX.COMPLETE(?, ?) AS REPLY',
+        binds: [config.model, prompt],
+        complete: (err, _statement, rows) => {
             if (err) {
-                console.error('⚠️ Snowflake Execution Error: ' + err.message);
-                return res.status(500).json({ error: 'Failed to fetch AI response from Snowflake' });
+                console.error(`Snowflake Cortex query failed: ${err.message}`);
+                return res.status(502).json({ error: 'Snowflake could not generate a response.' });
             }
-            
-            // Safe extraction supporting both uppercase and lowercase row keys
-            const row = rows && rows.length > 0 ? rows[0] : {};
-            const aiResponse = row.REPLY || row.reply || Object.values(row)[0] || "No response generated.";
-            
-            res.json({ reply: aiResponse });
+
+            const reply = rows?.[0]?.REPLY ?? rows?.[0]?.reply;
+            if (typeof reply !== 'string' || !reply.trim()) {
+                return res.status(502).json({ error: 'Snowflake returned an empty response.' });
+            }
+            res.json({ reply });
         }
     });
 });
 
-app.listen(3000, () => {
-    console.log('🚀 ResQ Backend Bridge running on http://localhost:3000');
+app.listen(port, () => {
+    console.log(`ResQ backend bridge listening on http://localhost:${port}.`);
 });
