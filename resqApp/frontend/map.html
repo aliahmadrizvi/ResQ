@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ResQ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- 👉 PASTE THESE TWO LINES IN THE HEAD OF EVERY HTML FILE -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+</head>
+<body class="bg-slate-900 text-white min-h-screen flex flex-col md:flex-row">
+    
+    <nav class="w-full md:w-64 bg-slate-800 p-4 border-r border-slate-700 flex flex-col">
+        <h1 class="text-2xl font-bold text-red-500 mb-8 tracking-wide">🚨 ResQ</h1>
+        <ul class="space-y-2 flex-1">
+            <li><a href="index.html" class="block p-3 hover:bg-slate-700 rounded-lg text-slate-300 transition">🏠 Dashboard</a></li>
+            <li id="nav-report"><a href="report.html" class="block p-3 hover:bg-slate-700 rounded-lg text-slate-300 transition">🚨 Report Emergency</a></li>
+            <li><a href="incidents.html" class="block p-3 hover:bg-slate-700 rounded-lg text-slate-300 transition">📍 Active Incidents</a></li>
+            <li id="nav-responder"><a href="responder.html" class="block p-3 hover:bg-slate-700 rounded-lg text-slate-300 transition text-red-400">👨‍🚒 Responder Panel</a></li>
+            <li><a href="guide.html" class="block p-3 hover:bg-slate-700 rounded-lg text-slate-300 transition">🧭 Emergency Guide</a></li>
+            <li><a href="map.html" class="block p-3 bg-slate-700 rounded-lg text-white font-medium">🗺️ Live Map</a></li>
+            <li><a href="nearby.html" class="block p-3 hover:bg-slate-700 rounded-lg text-slate-300 transition">🏥 Nearby Help</a></li>
+            <li id="nav-analytics"><a href="analytics.html" class="block p-3 hover:bg-slate-700 rounded-lg text-slate-300 transition">📊 Analytics</a></li>
+        </ul>
+        <button onclick="localStorage.removeItem('resq_role'); window.location.href='login.html'" class="mt-8 bg-slate-700 hover:bg-red-600 text-white p-2 rounded w-full transition">Switch Role</button>
+    </nav>
+
+    <main class="flex-1 p-6 relative flex flex-col min-h-[600px]">
+        <header class="mb-4">
+            <h2 class="text-3xl font-semibold">Incident Map</h2>
+            <p class="text-slate-400 mt-1">Spatial view of active alerts and infrastructure.</p>
+        </header>
+
+        <div class="flex-1 w-full bg-slate-800 rounded-xl border border-slate-700 overflow-hidden shadow-inner p-1">
+            <iframe 
+                width="100%" 
+                height="100%" 
+                style="border:0; min-height: 500px; border-radius: 0.5rem;" 
+                src="https://maps.google.com/maps?width=100%25&amp;height=600&amp;hl=en&amp;q=Integral%20University,%20Lucknow&amp;t=&amp;z=15&amp;ie=UTF8&amp;iwloc=B&amp;output=embed" 
+                allowfullscreen 
+                loading="lazy">
+            </iframe>
+        </div>
+    </main>
+
+    <script src="app.js"></script>
+    <script type="module">
+  import { db } from './firebase-config.js';
+  // Ab aap yahan Firestore se data save ya read kar sakte hain!
+</script>
+</body>
+</html>
