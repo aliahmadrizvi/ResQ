@@ -1,7 +1,7 @@
 // ==========================================
 // 1. YOUR FIREBASE CONFIG (Get this from Firebase Console -> Project Settings -> General -> Your Apps)
 // ==========================================
-window.RESQ_API_BASE = window.RESQ_API_BASE || 'http://localhost:3001';
+window.RESQ_API_BASE = window.RESQ_API_BASE || 'http://[::1]:3001';
 
 function initializeResponsiveNavigation() {
     const toggle = document.getElementById('nav-toggle');

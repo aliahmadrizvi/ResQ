@@ -137,14 +137,18 @@
 
         const assistantText = document.getElementById('assistant-status-text');
         const assistantDot = document.getElementById('assistant-status-dot');
-        fetch(`${window.RESQ_API_BASE || 'http://localhost:3001'}/api/health`)
+        fetch(`${window.RESQ_API_BASE || 'http://[::1]:3001'}/api/health`)
             .then(async response => ({ response, data: await response.json() }))
             .then(({ response, data }) => {
                 if (response.ok && data.status === 'connected') {
                     assistantText.textContent = 'Snowflake connected · Cortex is ready';
                     assistantDot.className = 'h-2.5 w-2.5 rounded-full bg-emerald-400';
                 } else {
-                    assistantText.textContent = data.status === 'not_configured' ? 'Add Snowflake settings to the local .env file' : 'Snowflake connection is unavailable';
+                    assistantText.textContent = data.status === 'not_configured'
+                        ? 'Add Snowflake settings to the local .env file'
+                        : data.status === 'connecting'
+                            ? 'Connecting to Snowflake…'
+                            : `Connection failed · ${data.error || 'Snowflake is unavailable'}`;
                     assistantDot.className = 'h-2.5 w-2.5 rounded-full bg-amber-400';
                 }
             })

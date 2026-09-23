@@ -19,6 +19,7 @@ const maxMessageLength = 2000;
 
 app.use(cors());
 app.use(express.json({ limit: '16kb' }));
+app.use(express.static(__dirname));
 
 const normalizeAccount = (value = '') => value
     .trim()
@@ -41,18 +42,27 @@ const missingConfig = ['account', 'username', 'password', 'warehouse', 'database
     .filter((key) => !config[key]);
 let connection;
 let connectionState = missingConfig.length ? 'not_configured' : 'connecting';
+let connectionError = null;
+let connectionRetryTimer = null;
 
 app.get('/api/health', (_req, res) => {
-    res.status(connectionState === 'connected' ? 200 : 503).json({ status: connectionState });
+    res.status(connectionState === 'connected' ? 200 : 503).json({
+        status: connectionState,
+        ...(connectionError ? { error: connectionError } : {})
+    });
 });
 
-if (missingConfig.length) {
-    console.error(`Snowflake is not configured. Set: ${missingConfig.map((key) => ({
-        account: 'SNOWFLAKE_ACCOUNT', username: 'SNOWFLAKE_USER', password: 'SNOWFLAKE_PASSWORD',
-        warehouse: 'SNOWFLAKE_WAREHOUSE', database: 'SNOWFLAKE_DATABASE'
-    })[key]).join(', ')}`);
-} else {
-    connection = snowflake.createConnection({
+function scheduleConnectionRetry() {
+    if (connectionRetryTimer || missingConfig.length) return;
+    connectionRetryTimer = setTimeout(() => {
+        connectionRetryTimer = null;
+        connectToSnowflake();
+    }, 15000);
+}
+
+function connectToSnowflake() {
+    connectionState = 'connecting';
+    const nextConnection = snowflake.createConnection({
         account: config.account,
         username: config.username,
         password: config.password,
@@ -62,16 +72,30 @@ if (missingConfig.length) {
         ...(config.role ? { role: config.role } : {})
     });
 
-    connection.connect((err, conn) => {
+    nextConnection.connect((err, conn) => {
         if (err) {
+            connection = null;
             connectionState = 'disconnected';
-            console.error(`Snowflake connection failed: ${err.message}`);
+            connectionError = err.message;
+            console.error(`Snowflake connection failed${err.code ? ` (${err.code})` : ''}: ${err.message}`);
+            scheduleConnectionRetry();
             return;
         }
 
+        connection = conn;
         connectionState = 'connected';
+        connectionError = null;
         console.log(`Connected to Snowflake (connection ${conn.getId()}).`);
     });
+}
+
+if (missingConfig.length) {
+    console.error(`Snowflake is not configured. Set: ${missingConfig.map((key) => ({
+        account: 'SNOWFLAKE_ACCOUNT', username: 'SNOWFLAKE_USER', password: 'SNOWFLAKE_PASSWORD',
+        warehouse: 'SNOWFLAKE_WAREHOUSE', database: 'SNOWFLAKE_DATABASE'
+    })[key]).join(', ')}`);
+} else {
+    connectToSnowflake();
 }
 
 app.post('/api/chat', (req, res) => {
@@ -92,8 +116,8 @@ app.post('/api/chat', (req, res) => {
         binds: [config.model, prompt],
         complete: (err, _statement, rows) => {
             if (err) {
-                console.error(`Snowflake Cortex query failed: ${err.message}`);
-                return res.status(502).json({ error: 'Snowflake could not generate a response.' });
+                console.error(`Snowflake Cortex query failed${err.code ? ` (${err.code})` : ''}: ${err.message}`);
+                return res.status(502).json({ error: `Cortex query failed${err.code ? ` (${err.code})` : ''}: ${err.message}` });
             }
 
             const reply = rows?.[0]?.REPLY ?? rows?.[0]?.reply;

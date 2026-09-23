@@ -80,6 +80,12 @@
             return Number.isFinite(latitude) && Number.isFinite(longitude) && Math.abs(latitude) <= 90 && Math.abs(longitude) <= 180 ? [latitude, longitude] : null;
         }
 
+        function googleMapsUrl(incident) {
+            const coordinates = getIncidentCoordinates(incident);
+            const query = coordinates ? `${coordinates[0]},${coordinates[1]}` : (incident.location || '');
+            return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+        }
+
         window.renderIncidentMap = function () {
             const incidents = getIncidents();
             const activeIncidents = incidents.filter(incident => incident.status !== 'Resolved');
@@ -99,7 +105,7 @@
                     fillColor: critical ? '#dc2626' : '#f97316',
                     fillOpacity: 0.9
                 }).addTo(incidentMarkers);
-                marker.bindPopup(`<strong>${escapeMapHtml(incident.type || 'Emergency')}</strong><br>${escapeMapHtml(incident.location || 'Location unavailable')}<br><span>${escapeMapHtml(incident.status || 'New')} · ${escapeMapHtml(incident.id || '')}</span>`);
+                marker.bindPopup(`<strong>${escapeMapHtml(incident.type || 'Emergency')}</strong><br>${escapeMapHtml(incident.location || 'Location unavailable')}<br><span>${escapeMapHtml(incident.status || 'New')} · ${escapeMapHtml(incident.id || '')}</span><br><a href="${googleMapsUrl(incident)}" target="_blank" rel="noopener noreferrer">Open in Google Maps ↗</a>`);
             });
 
             document.getElementById('map-incident-count').textContent = activeIncidents.length;
@@ -108,7 +114,7 @@
             list.innerHTML = activeIncidents.length ? activeIncidents.slice(0, 30).map((incident, index) => {
                 const coords = getIncidentCoordinates(incident);
                 const color = incident.severity === 'Critical' ? 'text-red-300' : 'text-amber-300';
-                return `<button type="button" data-map-index="${index}" class="w-full text-left rounded-lg border border-slate-700 bg-slate-900/60 p-3 hover:border-slate-500 transition"><span class="flex items-center justify-between gap-2"><strong class="truncate text-sm">${escapeMapHtml(incident.type || 'Emergency')}</strong><span class="shrink-0 text-[11px] ${color}">${escapeMapHtml(incident.severity || 'Report')}</span></span><span class="block truncate text-xs text-slate-400 mt-1">${escapeMapHtml(incident.location || 'Location unavailable')}</span><span class="block text-[11px] text-slate-500 mt-1">${escapeMapHtml(incident.id || '')}${coords ? ' · Map location available' : ' · GPS needed for map pin'}</span></button>`;
+                return `<div class="rounded-lg border border-slate-700 bg-slate-900/60 p-3 hover:border-slate-500 transition"><button type="button" data-map-index="${index}" class="w-full text-left"><span class="flex items-center justify-between gap-2"><strong class="truncate text-sm">${escapeMapHtml(incident.type || 'Emergency')}</strong><span class="shrink-0 text-[11px] ${color}">${escapeMapHtml(incident.severity || 'Report')}</span></span><span class="block truncate text-xs text-slate-400 mt-1">${escapeMapHtml(incident.location || 'Location unavailable')}</span><span class="block text-[11px] text-slate-500 mt-1">${escapeMapHtml(incident.id || '')}${coords ? ' · GPS pin available' : ' · Address only'}</span></button><a href="${googleMapsUrl(incident)}" target="_blank" rel="noopener noreferrer" class="mt-2 inline-block text-xs text-blue-300 hover:text-blue-200 underline">Open in Google Maps ↗</a></div>`;
             }).join('') : '<div class="rounded-lg border border-dashed border-slate-700 p-5 text-center"><p class="text-2xl mb-2">🛟</p><p class="text-sm text-slate-300">No active incidents</p><p class="text-xs text-slate-500 mt-1">New reports will appear here.</p></div>';
 
             list.querySelectorAll('[data-map-index]').forEach(button => button.addEventListener('click', () => {
