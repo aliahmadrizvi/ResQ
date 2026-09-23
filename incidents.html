@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ResQ - Active Incidents</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 text-white min-h-screen flex flex-col md:flex-row">
+
+    <!-- Universal Navigation Sidebar -->
+    <nav class="w-full md:w-64 bg-slate-800 p-4 border-r border-slate-700 flex flex-col">
+        <h1 class="text-2xl font-bold text-red-500 mb-8 tracking-wide">🚨 ResQ</h1>
+        <ul class="space-y-2 flex-1">
+            <li><a href="index.html" class="block p-3 hover:bg-slate-700 rounded-lg text-slate-300 transition">🏠 Dashboard</a></li>
+            <li id="nav-report"><a href="report.html" class="block p-3 hover:bg-slate-700 rounded-lg text-slate-300 transition">🚨 Report Emergency</a></li>
+            <li><a href="incidents.html" class="block p-3 bg-slate-700 rounded-lg text-white font-medium">📍 Active Incidents</a></li>
+            <li id="nav-responder"><a href="responder.html" class="block p-3 hover:bg-slate-700 rounded-lg text-slate-300 transition text-red-400">👨‍🚒 Responder Panel</a></li>
+            <li><a href="guide.html" class="block p-3 hover:bg-slate-700 rounded-lg text-slate-300 transition">🧭 Emergency Guide</a></li>
+            <li><a href="map.html" class="block p-3 hover:bg-slate-700 rounded-lg text-slate-300 transition">🗺️ Live Map</a></li>
+            <li><a href="nearby.html" class="block p-3 hover:bg-slate-700 rounded-lg text-slate-300 transition">🏥 Nearby Help</a></li>
+            <li id="nav-analytics"><a href="analytics.html" class="block p-3 hover:bg-slate-700 rounded-lg text-slate-300 transition">📊 Analytics</a></li>
+        </ul>
+        <button onclick="localStorage.removeItem('resq_role'); window.location.href='login.html'" class="mt-8 bg-slate-700 hover:bg-red-600 text-white p-2 rounded w-full transition">
+            Switch Role
+        </button>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-1 p-6 md:p-10 relative">
+        <header class="mb-8">
+            <h2 class="text-3xl font-semibold">Active Incidents</h2>
+            <p class="text-slate-400 mt-2">Real-time feed of reported emergencies.</p>
+        </header>
+
+        <!-- Search and Filters -->
+        <div class="flex flex-col md:flex-row gap-4 mb-8">
+            <input type="text" placeholder="Search by location or type..." class="flex-1 bg-slate-800 border border-slate-700 rounded-lg p-3 text-white focus:ring-2 focus:ring-red-500 outline-none">
+            <div class="flex gap-2 overflow-x-auto">
+                <button class="bg-red-600 px-4 py-2 rounded-lg font-medium whitespace-nowrap">All</button>
+                <button class="bg-slate-800 border border-slate-700 hover:bg-slate-700 px-4 py-2 rounded-lg font-medium whitespace-nowrap">Critical</button>
+                <button class="bg-slate-800 border border-slate-700 hover:bg-slate-700 px-4 py-2 rounded-lg font-medium whitespace-nowrap">Fire</button>
+                <button class="bg-slate-800 border border-slate-700 hover:bg-slate-700 px-4 py-2 rounded-lg font-medium whitespace-nowrap">Accident</button>
+            </div>
+        </div>
+
+        <!-- Incident Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="public-incident-list">
+            <!-- Rendered by JS -->
+        </div>
+
+        <!-- HIDDEN MODAL FOR INCIDENT DETAILS -->
+        <div id="incident-modal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 transition-opacity">
+            <div class="bg-slate-800 border border-slate-700 rounded-xl p-6 w-full max-w-lg relative shadow-2xl">
+                <button onclick="closeModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white text-xl">✖</button>
+                
+                <h2 id="modal-type" class="text-2xl font-bold mb-4 text-white"></h2>
+                
+                <div class="space-y-4 text-slate-300">
+                    <p><strong class="text-white">📍 Location:</strong> <span id="modal-loc"></span></p>
+                    <div class="flex justify-between">
+                        <p><strong class="text-white">⏰ Time:</strong> <span id="modal-time"></span></p>
+                        <p><strong class="text-white">⚠️ Severity:</strong> <span id="modal-sev"></span></p>
+                    </div>
+                    <p><strong class="text-white">📋 Status:</strong> <span id="modal-status" class="font-bold"></span></p>
+                    
+                    <div class="bg-slate-900 p-4 rounded-lg border border-slate-700 mt-4">
+                        <strong class="text-white block mb-1">Description of Emergency:</strong>
+                        <span id="modal-desc" class="text-slate-400 italic"></span>
+                    </div>
+                </div>
+
+                <button onclick="closeModal()" class="mt-6 w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-lg transition">Close Details</button>
+            </div>
+        </div>
+    </main>
+
+    <script src="app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const list = document.getElementById('public-incident-list');
+            const incidents = getIncidents();
+            
+            if (incidents.length === 0) {
+                list.innerHTML = `<p class="text-slate-400">No active incidents at the moment.</p>`;
+                return;
+            }
+
+            incidents.forEach(inc => {
+                let statusColor = inc.status === 'Resolved' ? 'text-green-400' : 'text-yellow-400';
+
+                const card = `
+                    <div class="bg-slate-800 border border-slate-700 p-5 rounded-xl flex flex-col justify-between hover:border-slate-500 transition">
+                        <div class="flex justify-between items-start mb-3">
+                            <h3 class="text-xl font-bold">${inc.type}</h3>
+                            <span class="bg-slate-900 border border-slate-700 text-xs px-2 py-1 rounded text-slate-300">${inc.time}</span>
+                        </div>
+                        <p class="text-slate-300 mb-1 truncate">📍 ${inc.location}</p>
+                        <p class="text-sm mt-3 text-slate-400">Status: <span class="${statusColor} font-bold">${inc.status}</span></p>
+                        
+                        <!-- VIEW DETAILS BUTTON TRIGGER -->
+                        <button onclick="openModal('${inc.id}')" class="mt-4 w-full bg-slate-700 hover:bg-slate-600 py-2 rounded transition font-medium">View Details</button>
+                    </div>
+                `;
+                list.innerHTML += card;
+            });
+        });
+
+        // MODAL LOGIC
+        function openModal(incidentId) {
+            const incidents = getIncidents();
+            const inc = incidents.find(i => i.id === incidentId);
+            
+            if (inc) {
+                document.getElementById('modal-type').innerText = inc.type;
+                document.getElementById('modal-loc').innerText = inc.location;
+                document.getElementById('modal-time').innerText = inc.time;
+                document.getElementById('modal-sev').innerText = inc.severity;
+                document.getElementById('modal-desc').innerText = inc.description;
+                
+                const statusEl = document.getElementById('modal-status');
+                statusEl.innerText = inc.status;
+                statusEl.className = inc.status === 'Resolved' ? 'text-green-400 font-bold' : 'text-yellow-400 font-bold';
+
+                // Show modal
+                document.getElementById('incident-modal').classList.remove('hidden');
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('incident-modal').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>

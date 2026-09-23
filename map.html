@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ResQ - Live Map</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .grid-bg {
+            background-size: 40px 40px;
+            background-image: linear-gradient(to right, #334155 1px, transparent 1px), linear-gradient(to bottom, #334155 1px, transparent 1px);
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-white min-h-screen flex flex-col md:flex-row">
+    <!-- Paste Universal Sidebar Here -->
+    <!-- Update your universal sidebar in ALL HTML files to look like this -->
+<nav class="w-full md:w-64 bg-slate-800 p-4 border-r border-slate-700 flex flex-col">
+    <h1 class="text-2xl font-bold text-red-500 mb-8 tracking-wide">🚨 ResQ</h1>
+    <ul class="space-y-2 flex-1">
+        <li><a href="index.html" class="block p-3 hover:bg-slate-700 rounded-lg text-slate-300 transition">🏠 Dashboard</a></li>
+        
+        <!-- Add ID here -->
+        <li id="nav-report"><a href="report.html" class="block p-3 hover:bg-slate-700 rounded-lg text-slate-300 transition">🚨 Report Emergency</a></li>
+        
+        <li><a href="incidents.html" class="block p-3 hover:bg-slate-700 rounded-lg text-slate-300 transition">📍 Active Incidents</a></li>
+        
+        <!-- Add ID here -->
+        <li id="nav-responder"><a href="responder.html" class="block p-3 hover:bg-slate-700 rounded-lg text-slate-300 transition text-red-400">👨‍🚒 Responder Panel</a></li>
+        
+        <li><a href="guide.html" class="block p-3 hover:bg-slate-700 rounded-lg text-slate-300 transition">🧭 Emergency Guide</a></li>
+        <li><a href="map.html" class="block p-3 hover:bg-slate-700 rounded-lg text-slate-300 transition">🗺️ Live Map</a></li>
+        <li><a href="nearby.html" class="block p-3 hover:bg-slate-700 rounded-lg text-slate-300 transition">🏥 Nearby Help</a></li>
+        
+        <!-- Add ID here -->
+        <li id="nav-analytics"><a href="analytics.html" class="block p-3 hover:bg-slate-700 rounded-lg text-slate-300 transition">📊 Analytics</a></li>
+    </ul>
+    
+    <!-- Add a logout button at the bottom of the sidebar so you can switch roles during demo -->
+    <button onclick="localStorage.removeItem('resq_role'); window.location.href='login.html'" class="mt-8 bg-slate-700 hover:bg-red-600 text-white p-2 rounded w-full transition">
+        Switch Role
+    </button>
+</nav>
+
+    <main class="flex-1 p-6 relative overflow-hidden flex flex-col">
+        <header class="mb-4 flex justify-between items-end">
+            <div>
+                <h2 class="text-3xl font-semibold">Incident Map</h2>
+                <p class="text-slate-400 mt-1">Spatial view of active alerts and infrastructure.</p>
+            </div>
+            <div class="flex gap-3 text-sm bg-slate-800 p-2 rounded-lg border border-slate-700">
+                <span>📍 You</span>
+                <span>🔴 Incident</span>
+                <span>🏥 Hospital</span>
+            </div>
+        </header>
+
+        <!-- Fake Map Interface -->
+        <div class="flex-1 bg-slate-800 rounded-xl border border-slate-700 relative overflow-hidden grid-bg shadow-inner">
+            <!-- Mock Markers -->
+            <div class="absolute top-[30%] left-[40%] bg-blue-600 text-white p-2 rounded-full shadow-lg shadow-blue-500/50 cursor-pointer animate-pulse">
+                📍 You
+            </div>
+            <div class="absolute top-[20%] left-[60%] bg-red-600 text-white p-2 rounded-full shadow-lg shadow-red-500/50 cursor-pointer border-2 border-white">
+                🔴 Accident
+            </div>
+            <div class="absolute top-[60%] left-[25%] bg-green-700 text-white p-2 rounded-lg shadow-lg cursor-pointer font-bold text-sm">
+                🏥 City Hospital
+            </div>
+            <div class="absolute top-[75%] left-[55%] bg-orange-600 text-white p-2 rounded-lg shadow-lg cursor-pointer font-bold text-sm">
+                🚒 Fire Station
+            </div>
+        </div>
+    </main>
+</body>
+</html>

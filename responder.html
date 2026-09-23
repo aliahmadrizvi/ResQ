@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ResQ - Responder Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 text-white min-h-screen flex flex-col md:flex-row">
+
+    <!-- Navigation Sidebar -->
+    <!-- Update your universal sidebar in ALL HTML files to look like this -->
+<nav class="w-full md:w-64 bg-slate-800 p-4 border-r border-slate-700 flex flex-col">
+    <h1 class="text-2xl font-bold text-red-500 mb-8 tracking-wide">🚨 ResQ</h1>
+    <ul class="space-y-2 flex-1">
+        <li><a href="index.html" class="block p-3 hover:bg-slate-700 rounded-lg text-slate-300 transition">🏠 Dashboard</a></li>
+        
+        <!-- Add ID here -->
+        <li id="nav-report"><a href="report.html" class="block p-3 hover:bg-slate-700 rounded-lg text-slate-300 transition">🚨 Report Emergency</a></li>
+        
+        <li><a href="incidents.html" class="block p-3 hover:bg-slate-700 rounded-lg text-slate-300 transition">📍 Active Incidents</a></li>
+        
+        <!-- Add ID here -->
+        <li id="nav-responder"><a href="responder.html" class="block p-3 hover:bg-slate-700 rounded-lg text-slate-300 transition text-red-400">👨‍🚒 Responder Panel</a></li>
+        
+        <li><a href="guide.html" class="block p-3 hover:bg-slate-700 rounded-lg text-slate-300 transition">🧭 Emergency Guide</a></li>
+        <li><a href="map.html" class="block p-3 hover:bg-slate-700 rounded-lg text-slate-300 transition">🗺️ Live Map</a></li>
+        <li><a href="nearby.html" class="block p-3 hover:bg-slate-700 rounded-lg text-slate-300 transition">🏥 Nearby Help</a></li>
+        
+        <!-- Add ID here -->
+        <li id="nav-analytics"><a href="analytics.html" class="block p-3 hover:bg-slate-700 rounded-lg text-slate-300 transition">📊 Analytics</a></li>
+    </ul>
+    
+    <!-- Add a logout button at the bottom of the sidebar so you can switch roles during demo -->
+    <button onclick="localStorage.removeItem('resq_role'); window.location.href='login.html'" class="mt-8 bg-slate-700 hover:bg-red-600 text-white p-2 rounded w-full transition">
+        Switch Role
+    </button>
+</nav>
+
+    <!-- Main Content -->
+    <main class="flex-1 p-6 md:p-10">
+        <header class="mb-8 border-b border-slate-700 pb-4">
+            <h2 class="text-3xl font-semibold">Responder Dashboard</h2>
+            <p class="text-slate-400 mt-2">Manage and update active incidents.</p>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="incident-list">
+            <!-- Incidents will be injected here via JavaScript -->
+        </div>
+    </main>
+
+    <script src="app.js"></script>
+    <script>
+        function loadIncidents() {
+            const list = document.getElementById('incident-list');
+            list.innerHTML = ''; // Clear current
+            
+            const incidents = getIncidents();
+            
+            if (incidents.length === 0) {
+                list.innerHTML = `<p class="text-slate-400">No active incidents at the moment.</p>`;
+                return;
+            }
+
+            incidents.forEach(inc => {
+                // Determine styling based on status
+                let statusColor = 'text-red-400';
+                let nextAction = `<button onclick="handleAction('${inc.id}', 'Responding')" class="w-full mt-4 bg-blue-600 hover:bg-blue-700 py-2 rounded font-medium transition">Accept Incident</button>`;
+                
+                if (inc.status === 'Responding') {
+                    statusColor = 'text-blue-400';
+                    nextAction = `<button onclick="handleAction('${inc.id}', 'Arrived')" class="w-full mt-4 bg-yellow-600 hover:bg-yellow-700 py-2 rounded font-medium transition">Mark Arrived</button>`;
+                } else if (inc.status === 'Arrived') {
+                    statusColor = 'text-yellow-400';
+                    nextAction = `<button onclick="handleAction('${inc.id}', 'Resolved')" class="w-full mt-4 bg-green-600 hover:bg-green-700 py-2 rounded font-medium transition">Mark Resolved</button>`;
+                } else if (inc.status === 'Resolved') {
+                    statusColor = 'text-green-400';
+                    nextAction = `<button disabled class="w-full mt-4 bg-slate-700 text-slate-400 py-2 rounded font-medium cursor-not-allowed">Incident Closed</button>`;
+                }
+
+                const card = `
+                    <div class="bg-slate-800 border ${inc.severity === 'Critical' && inc.status !== 'Resolved' ? 'border-red-500' : 'border-slate-700'} p-5 rounded-xl shadow-lg relative flex flex-col justify-between h-full">
+                        <div>
+                            <div class="flex justify-between items-start mb-3">
+                                <h3 class="text-xl font-bold">${inc.type}</h3>
+                                <span class="bg-slate-700 text-xs px-2 py-1 rounded">${inc.time}</span>
+                            </div>
+                            <p class="text-slate-300 text-sm mb-1"><span class="font-bold">📍 Loc:</span> ${inc.location}</p>
+                            <p class="text-slate-300 text-sm mb-1"><span class="font-bold">⚠️ Sev:</span> ${inc.severity}</p>
+                            <p class="text-sm mt-3 text-slate-400 bg-slate-900 p-2 rounded border border-slate-700">"${inc.description}"</p>
+                        </div>
+                        <div class="mt-4 pt-4 border-t border-slate-700">
+                            <p class="text-sm font-bold ${statusColor}">Status: ${inc.status}</p>
+                            ${nextAction}
+                        </div>
+                    </div>
+                `;
+                list.innerHTML += card;
+            });
+        }
+
+        // Action handler to update state and re-render
+        window.handleAction = function(id, newStatus) {
+            updateStatus(id, newStatus);
+            loadIncidents(); // Refresh UI immediately
+        }
+
+        // Initial Load
+        loadIncidents();
+    </script>
+</body>
+</html>
