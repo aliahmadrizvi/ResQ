@@ -1,7 +1,9 @@
 // ==========================================
 // 1. YOUR FIREBASE CONFIG (Get this from Firebase Console -> Project Settings -> General -> Your Apps)
 // ==========================================
-window.RESQ_API_BASE = window.RESQ_API_BASE || 'http://[::1]:3001';
+window.RESQ_API_BASE = window.RESQ_API_BASE || (
+    window.location.port === '3001' ? window.location.origin : 'http://[::1]:3001'
+);
 
 function initializeResponsiveNavigation() {
     const toggle = document.getElementById('nav-toggle');
@@ -114,88 +116,6 @@ async function clearSystemData() {
         window.location.href = 'index.html';
     }
 }
-// ==========================================
-// ❄️ SNOWFLAKE CORTEX AI CHATBOT WIDGET INJECTOR
-// ==========================================
-document.addEventListener("DOMContentLoaded", () => {
-    const chatHTML = `
-    <div id="resq-ai-chat" class="fixed bottom-5 right-5 z-50 font-sans">
-        <button onclick="toggleChat()" class="bg-red-600 hover:bg-red-700 text-white p-4 rounded-full shadow-2xl flex items-center justify-center transition-transform hover:scale-105 text-xl">
-            💬
-        </button>
-
-        <div id="chat-window" class="hidden absolute bottom-16 right-0 w-80 md:w-96 bg-slate-800 border border-slate-700 rounded-xl shadow-2xl flex flex-col h-[450px] overflow-hidden text-left">
-            <div class="bg-slate-900 p-4 border-b border-slate-700 flex justify-between items-center">
-                <h3 class="font-bold text-white flex items-center gap-2">❄️ ResQ Snowflake AI</h3>
-                <button onclick="toggleChat()" class="text-slate-400 hover:text-white font-bold">✖</button>
-            </div>
-
-            <div id="chat-messages" class="flex-1 p-4 overflow-y-auto space-y-3 text-sm text-slate-300">
-                <div class="bg-slate-900 p-3 rounded-lg border border-slate-700">
-                    <p>Hello! I am your <strong>Snowflake Cortex AI</strong> assistant powered by ResQ data. Ask me anything about active emergencies, safety protocols, or incident stats!</p>
-                </div>
-            </div>
-
-            <div class="p-3 bg-slate-900 border-t border-slate-700 flex gap-2">
-                <input type="text" id="chat-input" placeholder="Ask AI about incidents..." class="flex-1 bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm outline-none focus:ring-2 focus:ring-red-500" onkeypress="handleKeyPress(event)">
-                <button onclick="sendAIChatMessage()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition">Send</button>
-            </div>
-        </div>
-    </div>`;
-
-    // Inject into the body automatically
-    const div = document.createElement('div');
-    div.innerHTML = chatHTML;
-    document.body.appendChild(div);
-});
-
-// Chatbot Logic Functions
-function toggleChat() {
-    const win = document.getElementById('chat-window');
-    if (win) win.classList.toggle('hidden');
-}
-
-function handleKeyPress(e) {
-    if (e.key === 'Enter') sendAIChatMessage();
-}
-
-function sendAIChatMessage() {
-    const inputField = document.getElementById('chat-input');
-    if (!inputField) return;
-    const messageText = inputField.value.trim();
-    if (!messageText) return;
-
-    const messagesContainer = document.getElementById('chat-messages');
-
-    messagesContainer.innerHTML += `
-        <div class="bg-red-900/40 border border-red-800 p-3 rounded-lg ml-auto max-w-[85%] text-white">
-            <p>${messageText}</p>
-        </div>
-    `;
-    inputField.value = '';
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
-
-    setTimeout(() => {
-        let aiReply = "Analyzing your query via Snowflake Cortex Data Warehouse...";
-        const lower = messageText.toLowerCase();
-        
-        if (lower.includes('fire') || lower.includes('incident')) {
-            aiReply = "❄️ [Snowflake Cortex Insight]: Queried table `INCIDENTS`. Found active high-priority alerts. Routing optimized via Snowflake data streams.";
-        } else if (lower.includes('stat') || lower.includes('total') || lower.includes('analytics')) {
-            aiReply = "❄️ [Snowflake Cortex Insight]: Total processed records = 142. System resolution efficiency is at 98%.";
-        } else {
-            aiReply = "❄️ [Snowflake Cortex AI]: Vector search completed via Snowflake data cloud. Please check the Emergency Guide for specific protocol steps.";
-        }
-
-        messagesContainer.innerHTML += `
-            <div class="bg-slate-900 border border-slate-700 p-3 rounded-lg mr-auto max-w-[85%] text-slate-200">
-                <p>${aiReply}</p>
-            </div>
-        `;
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    }, 1000);
-}
-// ==========================================
 // ❄️ SNOWFLAKE CORTEX AI WIDGET (100% SNOWFLAKE DATA CLOUD)
 // ==========================================
 document.addEventListener("DOMContentLoaded", () => {
@@ -211,19 +131,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
         <div id="chat-window" class="hidden absolute bottom-16 right-0 w-80 md:w-96 bg-slate-800 border border-blue-500/50 rounded-xl shadow-2xl flex flex-col h-[450px] overflow-hidden text-left">
             <div class="bg-slate-900 p-4 border-b border-slate-700 flex justify-between items-center">
-                <h3 class="font-bold text-white flex items-center gap-2">❄️ Snowflake Cortex AI</h3>
+                <div><h3 class="font-bold text-white flex items-center gap-2">❄️ Snowflake AI assistant</h3><p id="chat-backend-status" class="text-xs text-slate-400 mt-1">Checking assistant…</p></div>
                 <button onclick="toggleChat()" class="text-slate-400 hover:text-white font-bold">✖</button>
             </div>
 
             <div id="chat-messages" class="flex-1 p-4 overflow-y-auto space-y-3 text-sm text-slate-300">
                 <div class="bg-slate-900 p-3 rounded-lg border border-slate-700">
-                    <p>Connected to <strong>Snowflake Data Cloud</strong>. I am your <strong>Snowflake Cortex AI</strong> assistant querying live database streams. Ask me to analyze incidents or check table stats!</p>
+                    <p>Ask about emergency response and safety guidance. Use the status above to check availability.</p>
                 </div>
             </div>
 
             <div class="p-3 bg-slate-900 border-t border-slate-700 flex gap-2">
-                <input type="text" id="chat-input" placeholder="Query Snowflake data..." class="flex-1 bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm outline-none focus:ring-2 focus:ring-blue-500" onkeypress="handleKeyPress(event)">
-                <button onclick="sendAIChatMessage()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition">Run Query</button>
+                <input type="text" id="chat-input" placeholder="Ask the Snowflake assistant…" class="flex-1 bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm outline-none focus:ring-2 focus:ring-blue-500" onkeypress="handleKeyPress(event)">
+                <button onclick="sendAIChatMessage()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition">Send</button>
             </div>
         </div>
     </div>`;
@@ -231,7 +151,29 @@ document.addEventListener("DOMContentLoaded", () => {
     const div = document.createElement('div');
     div.innerHTML = chatHTML;
     document.body.appendChild(div);
+    checkAIBackend();
 });
+
+async function checkAIBackend() {
+    const status = document.getElementById('chat-backend-status');
+    if (!status) return;
+    try {
+        const response = await fetch(`${window.RESQ_API_BASE}/api/health`);
+        const data = await response.json();
+        if (response.ok && data.status === 'connected') {
+            status.textContent = 'Snowflake connected · Cortex ready';
+            status.className = 'text-xs text-emerald-400 mt-1';
+        } else {
+            status.textContent = data.status === 'not_configured'
+                ? `Snowflake settings required · ${data.error || ''}`
+                : `Snowflake unavailable · ${data.error || 'connection failed'}`;
+            status.className = 'text-xs text-amber-300 mt-1';
+        }
+    } catch (_error) {
+        status.textContent = 'Backend offline · run npm start';
+        status.className = 'text-xs text-red-300 mt-1';
+    }
+}
 
 function toggleChat() {
     const win = document.getElementById('chat-window');
@@ -242,7 +184,7 @@ function handleKeyPress(e) {
     if (e.key === 'Enter') sendAIChatMessage();
 }
 
-// Upgraded function for app.js to use your real Snowflake Backend API
+// Send requests to the Snowflake Cortex backend.
 async function sendAIChatMessage() {
     const inputField = document.getElementById('chat-input');
     if (!inputField) return;
@@ -254,7 +196,7 @@ async function sendAIChatMessage() {
     // 1. Display user message in your chat box UI immediately
     messagesContainer.innerHTML += `
         <div class="bg-blue-900/40 border border-blue-800 p-3 rounded-lg ml-auto max-w-[85%] text-white text-xs">
-            <p>${userText}</p>
+            <p>${escapeAIHtml(userText)}</p>
         </div>
     `;
     inputField.value = '';
@@ -264,13 +206,13 @@ async function sendAIChatMessage() {
     const loadingId = 'loading-' + Date.now();
     messagesContainer.innerHTML += `
         <div id="${loadingId}" class="bg-slate-900 border border-slate-700 p-3 rounded-lg mr-auto max-w-[85%] text-slate-400 italic text-xs">
-            ❄️ Querying Snowflake Cortex AI (llama3-70b)...
+            ❄️ Snowflake assistant is thinking…
         </div>
     `;
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
     try {
-        // 2. Send message to your live backend server connected to Snowflake
+        // The server calls Snowflake Cortex using its private connection settings.
         const response = await fetch(`${window.RESQ_API_BASE}/api/chat`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -289,7 +231,7 @@ async function sendAIChatMessage() {
         // 3. Display Snowflake's actual AI reply in your chat box UI
         messagesContainer.innerHTML += `
             <div class="bg-slate-900 border border-slate-700 p-3 rounded-lg mr-auto max-w-[85%] text-slate-200 text-xs leading-relaxed">
-                ❄️ <strong>Snowflake Cortex AI:</strong><br>${data.reply}
+                ❄️ <strong>Snowflake AI:</strong><br>${escapeAIHtml(data.reply).replace(/\n/g, '<br>')}
             </div>
         `;
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
@@ -301,8 +243,14 @@ async function sendAIChatMessage() {
         
         messagesContainer.innerHTML += `
             <div class="bg-red-900/50 p-3 rounded-lg mr-auto max-w-[85%] text-white text-xs">
-                ⚠️ ${error.message || 'Could not reach the Snowflake backend. Make sure the server is running.'}
+                ⚠️ ${escapeAIHtml(error.message || 'Could not reach the assistant. Make sure the server is running.')}
             </div>
         `;
     }
+}
+
+function escapeAIHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, (char) => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    })[char]);
 }

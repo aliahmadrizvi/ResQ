@@ -37,21 +37,17 @@ This MVP is built to run instantly with zero backend dependencies or server setu
 Run the local bridge to serve the pages from `localhost` (needed for browser GPS permission) and to enable the Snowflake assistant.
 
 1.  Clone or download the repository.
-2.  Copy `.env.example` to `.env` and add your Snowflake settings if you want Cortex chat.
+2.  Copy `.env.example` to `.env` and add your Snowflake connection settings to enable Cortex chat.
 3.  Run `npm start` from the repository root.
 4.  Open [http://localhost:3001/login.html](http://localhost:3001/login.html) in a modern browser and allow location access when prompted.
 
 ### Snowflake Cortex chat backend
 
-The Cortex chat widget needs the Snowflake connection values in `.env` (it is ignored by Git):
+The assistant uses Snowflake Cortex. Copy `.env.example` to `.env`, enter the account, user, and password for the same Snowflake account, then start the backend with `npm start`. `SNOWFLAKE_CORTEX_MODEL` defaults to `llama3.1-70b`; choose a model enabled for your account and region. The `/api/health` endpoint reports whether Snowflake is connected.
 
-```powershell
-Copy-Item .env.example .env
-# Edit .env and fill in your Snowflake account, user, and password.
-npm start
-```
 
-Optionally set `SNOWFLAKE_ROLE` and `SNOWFLAKE_CORTEX_MODEL`. The bridge exposes `/api/health` to report whether Snowflake is connected. The chat uses the local backend on port `3001` by default, so open the frontend on the same computer. Set `window.RESQ_API_BASE` before `app.js` if you use a different backend host or port.
+
+
 
 ### 🔐 Demo Credentials
 

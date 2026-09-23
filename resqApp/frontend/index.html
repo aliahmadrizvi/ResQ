@@ -104,7 +104,7 @@
                         </a>
                     </div>
                     <div class="mt-4 rounded-xl border border-slate-700/80 bg-slate-900/60 p-4">
-                        <div class="flex items-center justify-between gap-3"><div><p class="font-medium text-sm">ResQ assistant</p><p id="assistant-status-text" class="text-xs text-slate-400 mt-1">Checking Snowflake connection…</p></div><span id="assistant-status-dot" class="h-2.5 w-2.5 rounded-full bg-slate-500" aria-hidden="true"></span></div>
+                        <div class="flex items-center justify-between gap-3"><div><p class="font-medium text-sm">Snowflake assistant</p><p id="assistant-status-text" class="text-xs text-slate-400 mt-1">Checking assistant…</p></div><span id="assistant-status-dot" class="h-2.5 w-2.5 rounded-full bg-slate-500" aria-hidden="true"></span></div>
                     </div>
                 </section>
             </div>
@@ -145,10 +145,8 @@
                     assistantDot.className = 'h-2.5 w-2.5 rounded-full bg-emerald-400';
                 } else {
                     assistantText.textContent = data.status === 'not_configured'
-                        ? 'Add Snowflake settings to the local .env file'
-                        : data.status === 'connecting'
-                            ? 'Connecting to Snowflake…'
-                            : `Connection failed · ${data.error || 'Snowflake is unavailable'}`;
+                        ? `Add Snowflake settings · ${data.error || ''}`
+                        : `Snowflake connection failed · ${data.error || 'service unavailable'}`;
                     assistantDot.className = 'h-2.5 w-2.5 rounded-full bg-amber-400';
                 }
             })

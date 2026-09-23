@@ -4,7 +4,6 @@ const cors = require('cors');
 const path = require('path');
 
 // Load developer-local settings when running the bridge directly from this repo.
-// process.loadEnvFile is built into current supported Node.js releases.
 if (typeof process.loadEnvFile === 'function') {
     try {
         process.loadEnvFile(path.resolve(__dirname, '../../.env'));
@@ -100,14 +99,13 @@ if (missingConfig.length) {
 
 app.post('/api/chat', (req, res) => {
     const message = typeof req.body?.message === 'string' ? req.body.message.trim() : '';
-    if (!message) {
-        return res.status(400).json({ error: 'Message is required.' });
-    }
+    if (!message) return res.status(400).json({ error: 'Message is required.' });
     if (message.length > maxMessageLength) {
         return res.status(413).json({ error: `Message must be ${maxMessageLength} characters or fewer.` });
     }
     if (connectionState !== 'connected') {
-        return res.status(503).json({ error: 'Snowflake is unavailable. Check the backend configuration and connection.' });
+        const detail = connectionError ? `: ${connectionError}` : '.';
+        return res.status(503).json({ error: `Snowflake is ${connectionState}${detail}` });
     }
 
     const prompt = `You are a helpful emergency response assistant for ResQ. Give concise, safe instructions for this situation: ${message}`;
@@ -130,5 +128,5 @@ app.post('/api/chat', (req, res) => {
 });
 
 app.listen(port, () => {
-    console.log(`ResQ backend bridge listening on http://localhost:${port}.`);
+    console.log(`ResQ Snowflake backend listening on http://localhost:${port}.`);
 });
