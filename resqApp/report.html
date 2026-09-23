@@ -92,8 +92,48 @@
     </main>
 
     <script src="app.js"></script>
-   <script>
-    document.getElementById('report-form').addEventListener('submit', async (e) => {
+   <script src="app.js"></script>
+    <script>
+        // Fake GPS delay for effect
+        function getLocation() {
+            document.getElementById('location').value = "Locating...";
+            setTimeout(() => {
+                document.getElementById('location').value = "Integral University Main Gate (Lat: 26.9, Lng: 80.9)";
+            }, 1000); 
+        }
+
+        // 🌟 NEW: Magic Image Compressor! Shrinks 5MB photos into tiny 50kb strings
+        const compressImage = (file) => {
+            return new Promise((resolve, reject) => {
+                if (!file) return resolve(null); // Safely skip if no file
+                
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.src = event.target.result;
+                    img.onload = () => {
+                        // Create a virtual canvas to shrink the image
+                        const canvas = document.createElement('canvas');
+                        const MAX_WIDTH = 600; // Resize width
+                        const scaleSize = MAX_WIDTH / img.width;
+                        canvas.width = MAX_WIDTH;
+                        canvas.height = img.height * scaleSize;
+                        
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        
+                        // Compress to JPEG at 70% quality (Massive space saver!)
+                        resolve(canvas.toDataURL('image/jpeg', 0.7)); 
+                    };
+                    img.onerror = (e) => reject(new Error("Failed to process image"));
+                };
+                reader.onerror = error => reject(error);
+            });
+        };
+
+        // Submit Logic with safety checks
+        document.getElementById('report-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             
             const submitBtn = document.getElementById('submit-btn');
@@ -102,17 +142,23 @@
             submitBtn.classList.replace('bg-red-600', 'bg-slate-600');
 
             try {
-                const file1 = document.getElementById('photo1').files[0];
-                const file2 = document.getElementById('photo2').files[0];
-                const photo1Base64 = await getBase64(file1);
-                const photo2Base64 = await getBase64(file2);
+                // Safely check if inputs exist so it doesn't crash if an ID is missing
+                const p1 = document.getElementById('photo1');
+                const p2 = document.getElementById('photo2');
+                const file1 = (p1 && p1.files) ? p1.files[0] : null;
+                const file2 = (p2 && p2.files) ? p2.files[0] : null;
+                
+                // Compress the photos
+                const photo1Compressed = await compressImage(file1);
+                const photo2Compressed = await compressImage(file2);
                 
                 const photosArray = [];
-                if (photo1Base64) photosArray.push(photo1Base64);
-                if (photo2Base64) photosArray.push(photo2Base64);
+                if (photo1Compressed) photosArray.push(photo1Compressed);
+                if (photo2Compressed) photosArray.push(photo2Compressed);
                 
                 const uniqueId = 'RESQ-' + Math.floor(1000 + Math.random() * 9000);
                 
+                // Build the object
                 const newIncident = {
                     id: uniqueId,
                     type: document.getElementById('type').value,
@@ -121,30 +167,32 @@
                     severity: document.getElementById('severity').value,
                     status: 'Responder Needed',
                     description: document.getElementById('description').value,
-                    reporterName: document.getElementById('reporter-name').value,
-                    reporterPhone: document.getElementById('reporter-phone').value,
+                    reporterName: document.getElementById('reporter-name') ? document.getElementById('reporter-name').value : 'Anonymous',
+                    reporterPhone: document.getElementById('reporter-phone') ? document.getElementById('reporter-phone').value : '',
                     photos: photosArray 
                 };
 
-                // TRY TO SAVE IT
+                // Attempt to save to LocalStorage
                 addIncident(newIncident);
                 
-                // IF SUCCESSFUL:
+                // Success!
                 document.getElementById('report-form').reset();
                 document.getElementById('generated-id').innerText = uniqueId;
                 document.getElementById('success-message').classList.remove('hidden');
+                
                 setTimeout(() => window.location.href = 'incidents.html', 2000);
 
             } catch (error) {
-                // IF STORAGE IS FULL (QuotaExceededError), DO THIS INSTEAD:
-                alert("❌ Storage Full! The photos are too large for the browser's temporary database. Please click 'Reset System Data' in the sidebar.");
+                // If it ACTUALLY fails, print the real error
+                console.error(error);
+                alert("❌ Error: " + error.message + "\n\n(If you see a QuotaExceededError, click Reset Data in the sidebar!)");
                 
-                // Reset the button so they can try again
+                // Put the button back to normal so you can try again
                 submitBtn.innerText = "🚨 Submit Emergency";
                 submitBtn.disabled = false;
                 submitBtn.classList.replace('bg-slate-600', 'bg-red-600');
             }
         });
-   </script>
+    </script>
 </body>
 </html>
