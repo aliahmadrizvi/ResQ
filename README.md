@@ -1,6 +1,6 @@
-🚨 ResQ — Emergency Response & Coordination Platform
+# 🚨 ResQ — Emergency Response & Coordination Platform
 
-When things go wrong, know what to do next.
+*When things go wrong, know what to do next.*
 
 ResQ is a modern emergency-response and coordination platform designed for PS03 — When Things Go Wrong.
 
@@ -8,17 +8,17 @@ It connects citizens with emergency-response workflows through a centralized pla
 
 ResQ is built around a simple principle:
 
-«Report → Alert → Guide → Coordinate → Resolve»
+> «Report → Alert → Guide → Coordinate → Resolve»
 
 ---
 
-🌐 Live Project
+## 🌐 Live Project
 
-🔗 "Launch ResQ" (https://aliahmadrizvi.github.io/ResQ/resqApp/frontend/login.html)
+[🔗 "Launch ResQ"](https://aliahmadrizvi.github.io/ResQ/resqApp/frontend/login.html)
 
 ---
 
-🎯 The Problem
+## 🎯 The Problem
 
 During emergencies, people often face multiple challenges at the same time:
 
@@ -31,7 +31,7 @@ During emergencies, people often face multiple challenges at the same time:
 
 These delays can make emergency situations harder to manage.
 
-💡 Our Solution
+## 💡 Our Solution
 
 ResQ brings the critical parts of emergency response into one platform.
 
@@ -39,8 +39,9 @@ Citizens can report emergencies and provide relevant information, while responde
 
 ---
 
-🚨 Core Workflow
+## 🚨 Core Workflow
 
+```
                     CITIZEN
                        │
                        ▼
@@ -72,12 +73,13 @@ Citizens can report emergencies and provide relevant information, while responde
                        │
                        ▼
                     RESOLVED
+```
 
 ---
 
-✨ Key Features
+## ✨ Key Features
 
-👤 Citizen Emergency Reporting
+### 👤 Citizen Emergency Reporting
 
 Citizens can quickly report emergencies through a structured reporting interface.
 
@@ -93,7 +95,7 @@ This creates a structured incident that can be processed by the response workflo
 
 ---
 
-🚑 Responder Dashboard
+### 🚑 Responder Dashboard
 
 Responders get a dedicated interface for managing emergency incidents.
 
@@ -106,8 +108,9 @@ They can:
 - Track response progress
 - Update incident status
 
-Incident lifecycle
+**Incident lifecycle**
 
+```
 Reported
    ↓
 Responding
@@ -115,15 +118,17 @@ Responding
 Arrived
    ↓
 Resolved
+```
 
 This provides a clear overview of the response process.
 
 ---
 
-🔐 Role-Based Access
+### 🔐 Role-Based Access
 
 ResQ separates the citizen and responder experiences.
 
+```
                 RESQ
                   │
           ┌───────┴───────┐
@@ -134,12 +139,13 @@ ResQ separates the citizen and responder experiences.
       Incidents       Incidents
       Guides          Coordinate
       Maps            Response
+```
 
 Authentication is handled using Firebase Authentication.
 
 ---
 
-🗺️ Location Intelligence
+### 🗺️ Location Intelligence
 
 ResQ uses location technologies to improve emergency awareness.
 
@@ -155,7 +161,7 @@ Leaflet.js is used for interactive mapping.
 
 ---
 
-📍 Nearby Emergency Services
+### 📍 Nearby Emergency Services
 
 Users can quickly access nearby emergency infrastructure such as:
 
@@ -167,7 +173,7 @@ This reduces the time required to find essential services during an emergency.
 
 ---
 
-📖 Emergency Safety Guides
+### 📖 Emergency Safety Guides
 
 ResQ provides quick-access safety information for different emergency situations.
 
@@ -182,7 +188,7 @@ The goal is to provide users with clear actions to take while help is being coor
 
 ---
 
-📊 Analytics & Data
+### 📊 Analytics & Data
 
 Emergency incidents generate valuable operational data.
 
@@ -199,35 +205,38 @@ Snowflake is included in the architecture for data and analytics capabilities.
 
 ---
 
-🛠️ Technology Stack
+## 🛠️ Technology Stack
 
-🎨 Frontend
+### 🎨 Frontend
 
-Technology| Purpose
-HTML5| Application structure
-CSS3| Styling and responsive design
-JavaScript ES6+| Application logic and interactions
-Leaflet.js| Interactive maps and location visualization
-
----
-
-☁️ Backend & Cloud
-
-Technology| Purpose
-Firebase Cloud| Cloud infrastructure
-Firebase Authentication| Authentication and access control
-Firebase Cloud Firestore| Incident and application data
-Firebase Cloud Functions| Backend automation and server-side processing
+| Technology | Purpose |
+| --- | --- |
+| HTML5 | Application structure |
+| CSS3 | Styling and responsive design |
+| JavaScript ES6+ | Application logic and interactions |
+| Leaflet.js | Interactive maps and location visualization |
 
 ---
 
-📊 Data & Analytics
+### ☁️ Backend & Cloud
 
-Technology| Purpose
-Snowflake| Data management and analytics
-AI Integration| Planned intelligent incident analysis and recommendations
+| Technology | Purpose |
+| --- | --- |
+| Firebase Cloud | Cloud infrastructure |
+| Firebase Authentication | Authentication and access control |
+| Firebase Cloud Firestore | Incident and application data |
+| Firebase Cloud Functions | Backend automation and server-side processing |
 
-«🤖 AI integration is planned for a future version of ResQ.»
+---
+
+### 📊 Data & Analytics
+
+| Technology | Purpose |
+| --- | --- |
+| Snowflake | Data management and analytics |
+| AI Integration | Planned intelligent incident analysis and recommendations |
+
+> «🤖 AI integration is planned for a future version of ResQ.»
 
 Potential AI capabilities include:
 
@@ -239,7 +248,7 @@ Potential AI capabilities include:
 
 ---
 
-🔌 APIs & Location
+### 🔌 APIs & Location
 
 - Fetch API — API communication
 - Geolocation API — User location
@@ -247,7 +256,7 @@ Potential AI capabilities include:
 
 ---
 
-🚀 Development & Deployment
+### 🚀 Development & Deployment
 
 - Git
 - GitHub
@@ -257,8 +266,9 @@ Potential AI capabilities include:
 
 ---
 
-🏗️ System Architecture
+## 🏗️ System Architecture
 
+```
 ┌───────────────────────────────────────────────┐
 │                    USER                       │
 │             Citizen / Responder              │
@@ -291,45 +301,47 @@ Potential AI capabilities include:
      │ Analysis &       │
      │ Recommendations  │
      └──────────────────┘
+```
 
 ---
 
-🔄 How ResQ Works
+## 🔄 How ResQ Works
 
-01 — Report
+### 01 — Report
 
 A citizen identifies an emergency and submits an incident report.
 
-02 — Store
+### 02 — Store
 
 Incident information is securely stored using Firebase Cloud Firestore.
 
-03 — Locate
+### 03 — Locate
 
 The system uses location services to associate the incident with its geographical context.
 
-04 — Alert & Coordinate
+### 04 — Alert & Coordinate
 
 Responders can access the incident through the responder interface and begin coordinating the response.
 
-05 — Respond
+### 05 — Respond
 
 The responder updates the incident through different stages:
 
-Reported → Responding → Arrived → Resolved
+**Reported → Responding → Arrived → Resolved**
 
-06 — Analyze
+### 06 — Analyze
 
 Collected incident data can be used for operational analytics through Snowflake.
 
-07 — Future Intelligence
+### 07 — Future Intelligence
 
 Planned AI capabilities can assist with incident analysis, prioritization, and response recommendations.
 
 ---
 
-📁 Project Structure
+## 📁 Project Structure
 
+```
 /resq-app
 │
 ├── app.js
@@ -361,23 +373,24 @@ Planned AI capabilities can assist with incident analysis, prioritization, and r
 │
 └── responder.html
     └── Responder incident management portal
+```
 
 ---
 
-🔐 Demo Access
+## 🔐 Demo Access
 
-Responder Portal
+**Responder Portal**
 
 For demonstration purposes:
 
-Responder ID: admin
-Password: admin123
+- **Responder ID:** `admin`
+- **Password:** `admin123`
 
-«These credentials are intended for the hackathon demonstration environment.»
+> «These credentials are intended for the hackathon demonstration environment.»
 
 ---
 
-🌟 Why ResQ?
+## 🌟 Why ResQ?
 
 ResQ focuses on the coordination gap that appears during emergencies.
 
@@ -385,35 +398,35 @@ Instead of treating emergency reporting, location, safety guidance, and responde
 
 One platform for:
 
-📢 Reporting
+### 📢 Reporting
 
 Quickly communicate what happened.
 
-📍 Location
+### 📍 Location
 
 Understand where the incident is happening.
 
-📖 Guidance
+### 📖 Guidance
 
 Help citizens understand what to do while assistance is being coordinated.
 
-🚑 Coordination
+### 🚑 Coordination
 
 Give responders a structured view of active incidents.
 
-📊 Analytics
+### 📊 Analytics
 
 Turn incident data into operational insights.
 
-🤖 Intelligence — Planned
+### 🤖 Intelligence — Planned
 
 Use AI to support faster incident understanding and recommendations.
 
 ---
 
-🔮 Future Roadmap
+## 🔮 Future Roadmap
 
-Phase 1 — Core Platform
+### Phase 1 — Core Platform
 
 - Citizen reporting
 - Responder dashboard
@@ -421,14 +434,14 @@ Phase 1 — Core Platform
 - Incident management
 - Maps and location
 
-Phase 2 — Intelligence
+### Phase 2 — Intelligence
 
 - AI-powered incident classification
 - Priority recommendations
 - Automated incident summaries
 - Responder assistance
 
-Phase 3 — Advanced Response
+### Phase 3 — Advanced Response
 
 - Real-time responder tracking
 - Push notifications
@@ -438,20 +451,20 @@ Phase 3 — Advanced Response
 
 ---
 
-🏆 Hackathon Vision
+## 🏆 Hackathon Vision
 
-«ResQ is not just an emergency reporting application. It is a coordination layer between people, information, technology, and responders.»
+> «ResQ is not just an emergency reporting application. It is a coordination layer between people, information, technology, and responders.»
 
 Our vision is to make emergency response faster, clearer, more coordinated, and more accessible.
 
-ResQ
+**ResQ**
 
 Report. Respond. Resolve.
 
 ---
 
-🌐 Live Demo
+## 🌐 Live Demo
 
-"🚨 Launch ResQ" (https://aliahmadrizvi.github.io/ResQ/resqApp/frontend/login.html)
+["🚨 Launch ResQ"](https://aliahmadrizvi.github.io/ResQ/resqApp/frontend/login.html)
 
 ---
