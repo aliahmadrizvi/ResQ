@@ -184,6 +184,14 @@
                 document.getElementById('modal-time').innerText = inc.time;
                 document.getElementById('modal-sev').innerText = inc.severity;
                 document.getElementById('modal-desc').innerText = inc.description;
+                const translateBtn = document.getElementById('translate-btn');
+    if (translateBtn) {
+        translateBtn.style.display = 'block';
+        translateBtn.innerText = '❄️ Cortex Translate';
+        translateBtn.className = 'bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1 rounded shadow-lg transition';
+        translateBtn.disabled = false;
+    }
+
                 document.getElementById('modal-name').innerText = inc.reporterName || 'Anonymous';
                 
                 const phoneEl = document.getElementById('modal-phone');

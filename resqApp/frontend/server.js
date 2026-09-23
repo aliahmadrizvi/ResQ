@@ -97,36 +97,31 @@ if (missingConfig.length) {
     connectToSnowflake();
 }
 
-app.post('/api/chat', (req, res) => {
-    const message = typeof req.body?.message === 'string' ? req.body.message.trim() : '';
-    if (!message) return res.status(400).json({ error: 'Message is required.' });
-    if (message.length > maxMessageLength) {
-        return res.status(413).json({ error: `Message must be ${maxMessageLength} characters or fewer.` });
-    }
-    if (connectionState !== 'connected') {
-        const detail = connectionError ? `: ${connectionError}` : '.';
-        return res.status(503).json({ error: `Snowflake is ${connectionState}${detail}` });
+// Cortex AI Translation API Endpoint
+app.post('/api/translate', (req, res) => {
+    const textToTranslate = req.body.text;
+
+    if (!textToTranslate) {
+        return res.status(400).json({ error: 'Text is required' });
     }
 
-    const prompt = `You are a helpful emergency response assistant for ResQ. Give concise, safe instructions for this situation: ${message}`;
+    // Leaving the source language as '' forces Snowflake to auto-detect the language
+    const sqlStatement = `SELECT SNOWFLAKE.CORTEX.TRANSLATE(?, '', 'en') AS translated_text`;
+
     connection.execute({
-        sqlText: 'SELECT SNOWFLAKE.CORTEX.COMPLETE(?, ?) AS REPLY',
-        binds: [config.model, prompt],
-        complete: (err, _statement, rows) => {
+        sqlText: sqlStatement,
+        binds: [textToTranslate],
+        complete: (err, stmt, rows) => {
             if (err) {
-                console.error(`Snowflake Cortex query failed${err.code ? ` (${err.code})` : ''}: ${err.message}`);
-                return res.status(502).json({ error: `Cortex query failed${err.code ? ` (${err.code})` : ''}: ${err.message}` });
+                console.error('⚠️ Snowflake Translation Error: ' + err.message);
+                return res.status(500).json({ error: 'Translation failed' });
             }
-
-            const reply = rows?.[0]?.REPLY ?? rows?.[0]?.reply;
-            if (typeof reply !== 'string' || !reply.trim()) {
-                return res.status(502).json({ error: 'Snowflake returned an empty response.' });
-            }
-            res.json({ reply });
+            
+            // Extract response supporting varying Snowflake column casings
+            const row = rows && rows.length > 0 ? rows[0] : {};
+            const result = row.TRANSLATED_TEXT || row.translated_text || Object.values(row)[0];
+            
+            res.json({ translation: result });
         }
     });
-});
-
-app.listen(port, () => {
-    console.log(`ResQ Snowflake backend listening on http://localhost:${port}.`);
 });
