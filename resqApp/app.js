@@ -50,21 +50,21 @@ function updateStatus(id, newStatus) {
 }
 // Add this to the BOTTOM of your app.js file
 
+// Replace this function at the bottom of your app.js file
+
 function enforceRoleAccess() {
     const role = localStorage.getItem('resq_role') || 'citizen'; // Default to citizen
     
-    // Grab the nav links by their IDs (we will add these IDs in Step 3)
+    // Grab the nav links by their IDs
     const responderLink = document.getElementById('nav-responder');
-    const analyticsLink = document.getElementById('nav-analytics');
     const reportLink = document.getElementById('nav-report');
     
     if (role === 'citizen') {
-        // Citizens cannot see Responder Panel or Analytics
+        // Citizens cannot see Responder Panel (Analytics is now PUBLIC)
         if (responderLink) responderLink.style.display = 'none';
-        if (analyticsLink) analyticsLink.style.display = 'none';
         
-        // Security check: If a citizen tries to type 'responder.html' in the URL, kick them out
-        if (window.location.pathname.includes('responder.html') || window.location.pathname.includes('analytics.html')) {
+        // Security check: Only block the responder dashboard now
+        if (window.location.pathname.includes('responder.html')) {
             window.location.href = 'index.html';
         }
     } 
@@ -73,6 +73,8 @@ function enforceRoleAccess() {
         if (reportLink) reportLink.style.display = 'none';
     }
 }
+
+// Run this on every single page load
 
 // Run this on every single page load
 document.addEventListener('DOMContentLoaded', enforceRoleAccess);

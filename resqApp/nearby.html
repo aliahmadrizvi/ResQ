@@ -7,34 +7,23 @@
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-slate-900 text-white min-h-screen flex flex-col md:flex-row">
-    <!-- Paste Universal Sidebar Here -->
-   <!-- Update your universal sidebar in ALL HTML files to look like this -->
-<nav class="w-full md:w-64 bg-slate-800 p-4 border-r border-slate-700 flex flex-col">
-    <h1 class="text-2xl font-bold text-red-500 mb-8 tracking-wide">🚨 ResQ</h1>
-    <ul class="space-y-2 flex-1">
-        <li><a href="index.html" class="block p-3 hover:bg-slate-700 rounded-lg text-slate-300 transition">🏠 Dashboard</a></li>
-        
-        <!-- Add ID here -->
-        <li id="nav-report"><a href="report.html" class="block p-3 hover:bg-slate-700 rounded-lg text-slate-300 transition">🚨 Report Emergency</a></li>
-        
-        <li><a href="incidents.html" class="block p-3 hover:bg-slate-700 rounded-lg text-slate-300 transition">📍 Active Incidents</a></li>
-        
-        <!-- Add ID here -->
-        <li id="nav-responder"><a href="responder.html" class="block p-3 hover:bg-slate-700 rounded-lg text-slate-300 transition text-red-400">👨‍🚒 Responder Panel</a></li>
-        
-        <li><a href="guide.html" class="block p-3 hover:bg-slate-700 rounded-lg text-slate-300 transition">🧭 Emergency Guide</a></li>
-        <li><a href="map.html" class="block p-3 hover:bg-slate-700 rounded-lg text-slate-300 transition">🗺️ Live Map</a></li>
-        <li><a href="nearby.html" class="block p-3 hover:bg-slate-700 rounded-lg text-slate-300 transition">🏥 Nearby Help</a></li>
-        
-        <!-- Add ID here -->
-        <li id="nav-analytics"><a href="analytics.html" class="block p-3 hover:bg-slate-700 rounded-lg text-slate-300 transition">📊 Analytics</a></li>
-    </ul>
     
-    <!-- Add a logout button at the bottom of the sidebar so you can switch roles during demo -->
-    <button onclick="localStorage.removeItem('resq_role'); window.location.href='login.html'" class="mt-8 bg-slate-700 hover:bg-red-600 text-white p-2 rounded w-full transition">
-        Switch Role
-    </button>
-</nav>
+    <nav class="w-full md:w-64 bg-slate-800 p-4 border-r border-slate-700 flex flex-col">
+        <h1 class="text-2xl font-bold text-red-500 mb-8 tracking-wide">🚨 ResQ</h1>
+        <ul class="space-y-2 flex-1">
+            <li><a href="index.html" class="block p-3 hover:bg-slate-700 rounded-lg text-slate-300 transition">🏠 Dashboard</a></li>
+            <li id="nav-report"><a href="report.html" class="block p-3 hover:bg-slate-700 rounded-lg text-slate-300 transition">🚨 Report Emergency</a></li>
+            <li><a href="incidents.html" class="block p-3 hover:bg-slate-700 rounded-lg text-slate-300 transition">📍 Active Incidents</a></li>
+            <li id="nav-responder"><a href="responder.html" class="block p-3 hover:bg-slate-700 rounded-lg text-slate-300 transition text-red-400">👨‍🚒 Responder Panel</a></li>
+            <li><a href="guide.html" class="block p-3 hover:bg-slate-700 rounded-lg text-slate-300 transition">🧭 Emergency Guide</a></li>
+            <li><a href="map.html" class="block p-3 hover:bg-slate-700 rounded-lg text-slate-300 transition">🗺️ Live Map</a></li>
+            <li><a href="nearby.html" class="block p-3 bg-slate-700 rounded-lg text-white font-medium">🏥 Nearby Help</a></li>
+            <li id="nav-analytics"><a href="analytics.html" class="block p-3 hover:bg-slate-700 rounded-lg text-slate-300 transition">📊 Analytics</a></li>
+        </ul>
+        <button onclick="localStorage.removeItem('resq_role'); window.location.href='login.html'" class="mt-8 bg-slate-700 hover:bg-red-600 text-white p-2 rounded w-full transition">
+            Switch Role
+        </button>
+    </nav>
 
     <main class="flex-1 p-6 md:p-10">
         <header class="mb-8 border-b border-slate-700 pb-4">
@@ -43,8 +32,6 @@
         </header>
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            
-            <!-- Resource Card -->
             <div class="bg-slate-800 border border-slate-700 p-5 rounded-xl">
                 <div class="flex justify-between items-start mb-2">
                     <h3 class="text-xl font-bold text-white">🏥 City Hospital</h3>
@@ -52,12 +39,11 @@
                 </div>
                 <p class="text-slate-400 text-sm mb-4">Distance: 1.2 km away</p>
                 <div class="flex gap-2">
-                    <button class="flex-1 bg-blue-600 hover:bg-blue-700 py-2 rounded font-medium transition text-sm">📞 Call</button>
-                    <button class="flex-1 bg-slate-700 hover:bg-slate-600 py-2 rounded font-medium transition text-sm">🧭 Directions</button>
+                    <a href="tel:102" class="flex-1 bg-blue-600 hover:bg-blue-700 py-2 rounded font-medium transition text-sm block text-center">📞 Call</a>
+                    <a href="https://www.google.com/maps/dir/?api=1&destination=Hospital" target="_blank" class="flex-1 bg-slate-700 hover:bg-slate-600 py-2 rounded font-medium transition text-sm block text-center">🧭 Directions</a>
                 </div>
             </div>
 
-            <!-- Resource Card -->
             <div class="bg-slate-800 border border-slate-700 p-5 rounded-xl">
                 <div class="flex justify-between items-start mb-2">
                     <h3 class="text-xl font-bold text-white">👮 Central Police</h3>
@@ -65,12 +51,11 @@
                 </div>
                 <p class="text-slate-400 text-sm mb-4">Distance: 2.5 km away</p>
                 <div class="flex gap-2">
-                    <button class="flex-1 bg-blue-600 hover:bg-blue-700 py-2 rounded font-medium transition text-sm">📞 Call</button>
-                    <button class="flex-1 bg-slate-700 hover:bg-slate-600 py-2 rounded font-medium transition text-sm">🧭 Directions</button>
+                    <a href="tel:100" class="flex-1 bg-blue-600 hover:bg-blue-700 py-2 rounded font-medium transition text-sm block text-center">📞 Call</a>
+                    <a href="https://www.google.com/maps/dir/?api=1&destination=Police+Station" target="_blank" class="flex-1 bg-slate-700 hover:bg-slate-600 py-2 rounded font-medium transition text-sm block text-center">🧭 Directions</a>
                 </div>
             </div>
 
-            <!-- Resource Card -->
             <div class="bg-slate-800 border border-slate-700 p-5 rounded-xl">
                 <div class="flex justify-between items-start mb-2">
                     <h3 class="text-xl font-bold text-white">🏫 Safe Assembly Point</h3>
@@ -78,11 +63,11 @@
                 </div>
                 <p class="text-slate-400 text-sm mb-4">Distance: 300 meters away</p>
                 <div class="flex gap-2">
-                    <button class="flex-1 bg-slate-700 hover:bg-slate-600 py-2 rounded font-medium transition text-sm">🧭 Directions</button>
+                    <a href="https://www.google.com/maps/dir/?api=1&destination=Integral+University+Lucknow" target="_blank" class="flex-1 bg-slate-700 hover:bg-slate-600 py-2 rounded font-medium transition text-sm block text-center w-full">🧭 Get Route</a>
                 </div>
             </div>
-
         </div>
     </main>
+    <script src="app.js"></script>
 </body>
 </html>
