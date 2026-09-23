@@ -220,68 +220,64 @@ function handleKeyPress(e) {
     if (e.key === 'Enter') sendAIChatMessage();
 }
 
+// Upgraded function for app.js to use your real Snowflake Backend API
 async function sendAIChatMessage() {
     const inputField = document.getElementById('chat-input');
     if (!inputField) return;
-    const messageText = inputField.value.trim();
-    if (!messageText) return;
+    const userText = inputField.value.trim();
+    if (!userText) return;
 
     const messagesContainer = document.getElementById('chat-messages');
 
+    // 1. Display user message in your chat box UI immediately
     messagesContainer.innerHTML += `
         <div class="bg-blue-900/40 border border-blue-800 p-3 rounded-lg ml-auto max-w-[85%] text-white text-xs">
-            <p>SQL / Prompt: ${messageText}</p>
+            <p>${userText}</p>
         </div>
     `;
     inputField.value = '';
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
-    const typingId = 'typing-' + Date.now();
+    // Show loading state
+    const loadingId = 'loading-' + Date.now();
     messagesContainer.innerHTML += `
-        <div id="${typingId}" class="bg-slate-900 border border-slate-700 p-3 rounded-lg mr-auto max-w-[85%] text-slate-400 italic text-xs">
-            ❄️ Snowflake Cortex AI processing vector search on warehouse tables...
+        <div id="${loadingId}" class="bg-slate-900 border border-slate-700 p-3 rounded-lg mr-auto max-w-[85%] text-slate-400 italic text-xs">
+            ❄️ Querying Snowflake Cortex AI (llama3-70b)...
         </div>
     `;
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
-    setTimeout(() => {
-        const typingElement = document.getElementById(typingId);
-        if (typingElement) typingElement.remove();
+    try {
+        // 2. Send message to your live backend server connected to Snowflake
+        const response = await fetch('http://localhost:3000/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: userText })
+        });
 
-        const liveIncidents = getIncidents(); // Pulls real live data from your database!
-        const query = messageText.toLowerCase();
-        let aiResponse = "";
+        const data = await response.json();
+        
+        // Remove loading state
+        const loadingEl = document.getElementById(loadingId);
+        if (loadingEl) loadingEl.remove();
 
-        if (query.includes('active') || query.includes('list') || query.includes('incident') || query.includes('all')) {
-            const activeCount = liveIncidents.filter(i => i.status !== 'Resolved').length;
-            aiResponse = `❄️ <strong>[Snowflake Cortex SQL Engine]</strong><br>Query results from <code>RESQ_DB.PUBLIC.INCIDENTS</code> (${activeCount} active records):<br>`;
-            liveIncidents.slice(0, 3).forEach(inc => {
-                aiResponse += `• <b>${inc.id}</b> | ${inc.type} | ${inc.location} | [${inc.severity}]<br>`;
-            });
-        } 
-        else if (query.includes('fire') || query.includes('accident') || query.includes('medical') || query.includes('critical')) {
-            const matched = liveIncidents.filter(i => i.type.toLowerCase().includes(query) || i.severity.toLowerCase().includes(query) || i.description.toLowerCase().includes(query));
-            if (matched.length > 0) {
-                aiResponse = `❄️ <strong>[Snowflake Cortex Vector Search Result]</strong><br>`;
-                matched.forEach(m => {
-                    aiResponse += `• <b>${m.id}</b>: "${m.description}" at <em>${m.location}</em> (Status: ${m.status})<br>`;
-                });
-            } else {
-                aiResponse = `❄️ Snowflake Cortex AI scanned table: No rows match filter criteria "<i>${messageText}</i>".`;
-            }
-        } 
-        else if (query.includes('stat') || query.includes('count') || query.includes('analytics')) {
-            aiResponse = `❄️ <strong>[Snowflake Data Warehouse Metrics]</strong><br>Total historical logs: ${liveIncidents.length}. Compute Warehouse status: Active (X-Small). Real-time telemetry synced.`;
-        } 
-        else {
-            aiResponse = `❄️ <strong>[Snowflake Cortex COMPLETE Function]</strong><br>Analyzed prompt: "<i>${messageText}</i>". Connected to live database streams. Total tracked incidents: ${liveIncidents.length}.`;
-        }
-
+        // 3. Display Snowflake's actual AI reply in your chat box UI
         messagesContainer.innerHTML += `
             <div class="bg-slate-900 border border-slate-700 p-3 rounded-lg mr-auto max-w-[85%] text-slate-200 text-xs leading-relaxed">
-                ${aiResponse}
+                ❄️ <strong>Snowflake Cortex AI:</strong><br>${data.reply}
             </div>
         `;
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    }, 700);
+
+    } catch (error) {
+        console.error('Error connecting to chat backend:', error);
+        const loadingEl = document.getElementById(loadingId);
+        if (loadingEl) loadingEl.remove();
+        
+        messagesContainer.innerHTML += `
+            <div class="bg-red-900/50 p-3 rounded-lg mr-auto max-w-[85%] text-white text-xs">
+                ⚠️ Error: Could not reach Snowflake backend server. Make sure your local server is running.
+            </div>
+        `;
+    }
 }
