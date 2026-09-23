@@ -8,7 +8,6 @@
 </head>
 <body class="bg-slate-900 text-white min-h-screen flex flex-col md:flex-row">
     
-    <!-- Universal Navigation Sidebar -->
     <nav class="w-full md:w-64 bg-slate-800 p-4 border-r border-slate-700 flex flex-col">
         <h1 class="text-2xl font-bold text-red-500 mb-8 tracking-wide">🚨 ResQ</h1>
         <ul class="space-y-2 flex-1">
@@ -19,13 +18,9 @@
             <li><a href="guide.html" class="block p-3 hover:bg-slate-700 rounded-lg text-slate-300 transition">🧭 Emergency Guide</a></li>
             <li><a href="map.html" class="block p-3 hover:bg-slate-700 rounded-lg text-slate-300 transition">🗺️ Live Map</a></li>
             <li><a href="nearby.html" class="block p-3 hover:bg-slate-700 rounded-lg text-slate-300 transition">🏥 Nearby Help</a></li>
-            
-            <!-- THIS IS THE ACTIVE TAB FOR ANALYTICS -->
             <li id="nav-analytics"><a href="analytics.html" class="block p-3 bg-slate-700 rounded-lg text-white font-medium">📊 Analytics</a></li>
         </ul>
-        <button onclick="localStorage.removeItem('resq_role'); window.location.href='login.html'" class="mt-8 bg-slate-700 hover:bg-red-600 text-white p-2 rounded w-full transition">
-            Switch Role
-        </button>
+        <button onclick="localStorage.removeItem('resq_role'); window.location.href='login.html'" class="mt-8 bg-slate-700 hover:bg-red-600 text-white p-2 rounded w-full transition">Switch Role</button>
     </nav>
 
     <main class="flex-1 p-6 md:p-10">
@@ -55,53 +50,27 @@
 
         <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 mb-8 max-w-3xl shadow-lg">
             <h3 class="text-xl font-bold mb-6">Incident Type Distribution</h3>
-            
-            <!-- CSS Chart Bars -->
             <div class="space-y-5">
                 <div>
-                    <div class="flex justify-between text-sm mb-1">
-                        <span class="font-medium text-slate-200">Accident (42%)</span>
-                        <span class="text-slate-400">60 incidents</span>
-                    </div>
-                    <div class="w-full bg-slate-900 rounded-full h-4 overflow-hidden border border-slate-700">
-                        <div class="bg-red-500 h-4 rounded-full" style="width: 42%"></div>
-                    </div>
+                    <div class="flex justify-between text-sm mb-1"><span class="font-medium text-slate-200">Accident (42%)</span><span class="text-slate-400">60 incidents</span></div>
+                    <div class="w-full bg-slate-900 rounded-full h-4 overflow-hidden border border-slate-700"><div class="bg-red-500 h-4 rounded-full" style="width: 42%"></div></div>
                 </div>
-                
                 <div>
-                    <div class="flex justify-between text-sm mb-1">
-                        <span class="font-medium text-slate-200">Medical (28%)</span>
-                        <span class="text-slate-400">40 incidents</span>
-                    </div>
-                    <div class="w-full bg-slate-900 rounded-full h-4 overflow-hidden border border-slate-700">
-                        <div class="bg-blue-500 h-4 rounded-full" style="width: 28%"></div>
-                    </div>
+                    <div class="flex justify-between text-sm mb-1"><span class="font-medium text-slate-200">Medical (28%)</span><span class="text-slate-400">40 incidents</span></div>
+                    <div class="w-full bg-slate-900 rounded-full h-4 overflow-hidden border border-slate-700"><div class="bg-blue-500 h-4 rounded-full" style="width: 28%"></div></div>
                 </div>
-
                 <div>
-                    <div class="flex justify-between text-sm mb-1">
-                        <span class="font-medium text-slate-200">Fire (15%)</span>
-                        <span class="text-slate-400">21 incidents</span>
-                    </div>
-                    <div class="w-full bg-slate-900 rounded-full h-4 overflow-hidden border border-slate-700">
-                        <div class="bg-orange-500 h-4 rounded-full" style="width: 15%"></div>
-                    </div>
+                    <div class="flex justify-between text-sm mb-1"><span class="font-medium text-slate-200">Fire (15%)</span><span class="text-slate-400">21 incidents</span></div>
+                    <div class="w-full bg-slate-900 rounded-full h-4 overflow-hidden border border-slate-700"><div class="bg-orange-500 h-4 rounded-full" style="width: 15%"></div></div>
                 </div>
-
                 <div>
-                    <div class="flex justify-between text-sm mb-1">
-                        <span class="font-medium text-slate-200">Road Block (10%)</span>
-                        <span class="text-slate-400">14 incidents</span>
-                    </div>
-                    <div class="w-full bg-slate-900 rounded-full h-4 overflow-hidden border border-slate-700">
-                        <div class="bg-yellow-500 h-4 rounded-full" style="width: 10%"></div>
-                    </div>
+                    <div class="flex justify-between text-sm mb-1"><span class="font-medium text-slate-200">Road Block (10%)</span><span class="text-slate-400">14 incidents</span></div>
+                    <div class="w-full bg-slate-900 rounded-full h-4 overflow-hidden border border-slate-700"><div class="bg-yellow-500 h-4 rounded-full" style="width: 10%"></div></div>
                 </div>
             </div>
         </div>
     </main>
 
-    <!-- Essential for role security to work -->
     <script src="app.js"></script>
 </body>
 </html>

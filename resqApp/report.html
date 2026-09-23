@@ -28,7 +28,6 @@
             <h2 class="text-3xl font-bold mb-6 text-red-500">Report an Emergency</h2>
             
             <form id="report-form" class="space-y-6">
-                
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-slate-300 mb-2 text-sm font-medium">Your Name</label>
@@ -78,10 +77,9 @@
                 <div>
                     <label class="block text-slate-300 mb-2 text-sm font-medium">Upload Evidence (Max 2 Photos)</label>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <input type="file" id="photo1" accept="image/*" class="w-full bg-slate-900 border border-slate-600 rounded-lg p-2 text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-slate-700 file:text-white hover:file:bg-slate-600">
-                        <input type="file" id="photo2" accept="image/*" class="w-full bg-slate-900 border border-slate-600 rounded-lg p-2 text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-slate-700 file:text-white hover:file:bg-slate-600">
+                        <input type="file" id="photo1" accept="image/*" class="w-full bg-slate-900 border border-slate-600 rounded-lg p-2 text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-slate-700 file:text-white">
+                        <input type="file" id="photo2" accept="image/*" class="w-full bg-slate-900 border border-slate-600 rounded-lg p-2 text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-slate-700 file:text-white">
                     </div>
-                    <p class="text-xs text-slate-500 mt-2">Photos help responders assess the situation before arriving.</p>
                 </div>
 
                 <button type="submit" id="submit-btn" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-4 rounded-lg shadow-lg transition text-lg">🚨 Submit Emergency</button>
@@ -94,27 +92,8 @@
     </main>
 
     <script src="app.js"></script>
-    <script>
-        function getLocation() {
-            document.getElementById('location').value = "Locating...";
-            setTimeout(() => {
-                document.getElementById('location').value = "Main College Gate (Lat: 26.9, Lng: 80.9)";
-            }, 1000); 
-        }
-
-        // Helper function to convert images to Base64 so they can be saved in LocalStorage
-        const getBase64 = (file) => {
-            return new Promise((resolve, reject) => {
-                if (!file) return resolve(null);
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = () => resolve(reader.result);
-                reader.onerror = error => reject(error);
-            });
-        };
-
-        // Make this function ASYNC so we can wait for images to process
-        document.getElementById('report-form').addEventListener('submit', async (e) => {
+   <script>
+    document.getElementById('report-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             
             const submitBtn = document.getElementById('submit-btn');
@@ -122,43 +101,50 @@
             submitBtn.disabled = true;
             submitBtn.classList.replace('bg-red-600', 'bg-slate-600');
 
-            // Process uploaded files
-            const file1 = document.getElementById('photo1').files[0];
-            const file2 = document.getElementById('photo2').files[0];
-            
-            const photo1Base64 = await getBase64(file1);
-            const photo2Base64 = await getBase64(file2);
-            
-            const photosArray = [];
-            if (photo1Base64) photosArray.push(photo1Base64);
-            if (photo2Base64) photosArray.push(photo2Base64);
-            
-            const uniqueId = 'RESQ-' + Math.floor(1000 + Math.random() * 9000);
-            
-            const newIncident = {
-                id: uniqueId,
-                type: document.getElementById('type').value,
-                location: document.getElementById('location').value,
-                time: 'Just now',
-                severity: document.getElementById('severity').value,
-                status: 'Responder Needed',
-                description: document.getElementById('description').value,
-                reporterName: document.getElementById('reporter-name').value,
-                reporterPhone: document.getElementById('reporter-phone').value,
-                // Save the base64 photos to the object
-                photos: photosArray 
-            };
+            try {
+                const file1 = document.getElementById('photo1').files[0];
+                const file2 = document.getElementById('photo2').files[0];
+                const photo1Base64 = await getBase64(file1);
+                const photo2Base64 = await getBase64(file2);
+                
+                const photosArray = [];
+                if (photo1Base64) photosArray.push(photo1Base64);
+                if (photo2Base64) photosArray.push(photo2Base64);
+                
+                const uniqueId = 'RESQ-' + Math.floor(1000 + Math.random() * 9000);
+                
+                const newIncident = {
+                    id: uniqueId,
+                    type: document.getElementById('type').value,
+                    location: document.getElementById('location').value,
+                    time: 'Just now',
+                    severity: document.getElementById('severity').value,
+                    status: 'Responder Needed',
+                    description: document.getElementById('description').value,
+                    reporterName: document.getElementById('reporter-name').value,
+                    reporterPhone: document.getElementById('reporter-phone').value,
+                    photos: photosArray 
+                };
 
-            addIncident(newIncident);
+                // TRY TO SAVE IT
+                addIncident(newIncident);
+                
+                // IF SUCCESSFUL:
+                document.getElementById('report-form').reset();
+                document.getElementById('generated-id').innerText = uniqueId;
+                document.getElementById('success-message').classList.remove('hidden');
+                setTimeout(() => window.location.href = 'incidents.html', 2000);
 
-            document.getElementById('report-form').reset();
-            document.getElementById('generated-id').innerText = uniqueId;
-            document.getElementById('success-message').classList.remove('hidden');
-            
-            setTimeout(() => {
-                window.location.href = 'incidents.html';
-            }, 2000);
+            } catch (error) {
+                // IF STORAGE IS FULL (QuotaExceededError), DO THIS INSTEAD:
+                alert("❌ Storage Full! The photos are too large for the browser's temporary database. Please click 'Reset System Data' in the sidebar.");
+                
+                // Reset the button so they can try again
+                submitBtn.innerText = "🚨 Submit Emergency";
+                submitBtn.disabled = false;
+                submitBtn.classList.replace('bg-slate-600', 'bg-red-600');
+            }
         });
-    </script>
+   </script>
 </body>
 </html>

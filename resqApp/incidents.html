@@ -21,6 +21,7 @@
             <li id="nav-analytics"><a href="analytics.html" class="block p-3 hover:bg-slate-700 rounded-lg text-slate-300 transition">📊 Analytics</a></li>
         </ul>
         <button onclick="localStorage.removeItem('resq_role'); window.location.href='login.html'" class="mt-8 bg-slate-700 hover:bg-red-600 text-white p-2 rounded w-full transition">Switch Role</button>
+        
     </nav>
 
     <main class="flex-1 p-6 md:p-10 relative">
@@ -31,22 +32,18 @@
 
         <div class="flex flex-col md:flex-row gap-4 mb-8">
             <input type="text" id="search-bar" placeholder="Search by ID, location, or type..." class="flex-1 bg-slate-800 border border-slate-700 rounded-lg p-3 text-white focus:ring-2 focus:ring-red-500 outline-none transition">
-            <div class="flex gap-2 overflow-x-auto pb-2" id="filter-container">
+            <div class="flex gap-2 overflow-x-auto pb-2">
                 <button onclick="applyFilter('All', this)" class="filter-btn bg-red-600 text-white border border-red-500 px-4 py-2 rounded-lg font-medium whitespace-nowrap transition">All</button>
-                <button onclick="applyFilter('Critical', this)" class="filter-btn bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-700 px-4 py-2 rounded-lg font-medium whitespace-nowrap transition">Critical</button>
-                <button onclick="applyFilter('High', this)" class="filter-btn bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-700 px-4 py-2 rounded-lg font-medium whitespace-nowrap transition">High</button>
-                <button onclick="applyFilter('Medium', this)" class="filter-btn bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-700 px-4 py-2 rounded-lg font-medium whitespace-nowrap transition">Medium</button>
-                <button onclick="applyFilter('Low', this)" class="filter-btn bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-700 px-4 py-2 rounded-lg font-medium whitespace-nowrap transition">Low</button>
-                <button onclick="applyFilter('Fire', this)" class="filter-btn bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-700 px-4 py-2 rounded-lg font-medium whitespace-nowrap transition">Fire</button>
-                <button onclick="applyFilter('Accident', this)" class="filter-btn bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-700 px-4 py-2 rounded-lg font-medium whitespace-nowrap transition">Accident</button>
+                <button onclick="applyFilter('Critical', this)" class="filter-btn bg-slate-800 text-slate-300 border border-slate-700 px-4 py-2 rounded-lg font-medium whitespace-nowrap transition">Critical</button>
+                <button onclick="applyFilter('High', this)" class="filter-btn bg-slate-800 text-slate-300 border border-slate-700 px-4 py-2 rounded-lg font-medium whitespace-nowrap transition">High</button>
+                <button onclick="applyFilter('Fire', this)" class="filter-btn bg-slate-800 text-slate-300 border border-slate-700 px-4 py-2 rounded-lg font-medium whitespace-nowrap transition">Fire</button>
+                <button onclick="applyFilter('Accident', this)" class="filter-btn bg-slate-800 text-slate-300 border border-slate-700 px-4 py-2 rounded-lg font-medium whitespace-nowrap transition">Accident</button>
             </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="public-incident-list">
-            <!-- Rendered by JS -->
-        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="public-incident-list"></div>
 
-        <!-- HIDDEN MODAL FOR INCIDENT DETAILS -->
+        <!-- MODAL -->
         <div id="incident-modal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 transition-opacity">
             <div class="bg-slate-800 border border-slate-700 rounded-xl p-6 w-full max-w-lg relative shadow-2xl max-h-[90vh] overflow-y-auto">
                 <button onclick="closeModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white text-xl z-10 bg-slate-800 rounded-full w-8 h-8 flex items-center justify-center border border-slate-600">✖</button>
@@ -75,12 +72,10 @@
                         <span id="modal-desc" class="text-slate-400 italic"></span>
                     </div>
 
-                    <!-- NEW: PHOTO GALLERY CONTAINER -->
+                    <!-- PHOTO GALLERY -->
                     <div id="modal-photos-container" class="mt-4 hidden">
                         <strong class="text-white block mb-2">📸 Attached Evidence:</strong>
-                        <div id="modal-photos" class="grid grid-cols-2 gap-3">
-                            <!-- Images get injected here -->
-                        </div>
+                        <div id="modal-photos" class="grid grid-cols-2 gap-3"></div>
                     </div>
                 </div>
                 <button onclick="closeModal()" class="mt-6 w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-lg transition">Close Details</button>
@@ -112,14 +107,13 @@
         function renderIncidents() {
             const list = document.getElementById('public-incident-list');
             list.innerHTML = ''; 
-            
             let incidents = getIncidents();
             
             incidents = incidents.filter(inc => {
-                const matchesSearch = inc.location.toLowerCase().includes(searchQuery) || 
-                                      inc.type.toLowerCase().includes(searchQuery) ||
-                                      inc.id.toLowerCase().includes(searchQuery);
-                                      
+                const searchTxt = searchQuery.toLowerCase();
+                const matchesSearch = inc.location.toLowerCase().includes(searchTxt) || 
+                                      inc.type.toLowerCase().includes(searchTxt) ||
+                                      inc.id.toLowerCase().includes(searchTxt);
                 let matchesFilter = true;
                 if (currentFilter !== 'All') {
                     if (['Critical', 'High', 'Medium', 'Low'].includes(currentFilter)) {
@@ -138,11 +132,9 @@
 
             incidents.forEach(inc => {
                 let statusColor = inc.status === 'Resolved' ? 'text-green-400' : 'text-yellow-400';
-                
-                // Add a small camera icon if photos exist
                 const photoBadge = (inc.photos && inc.photos.length > 0) ? `<span title="Photos Attached" class="ml-2">📸</span>` : '';
 
-                const card = `
+                list.innerHTML += `
                     <div class="bg-slate-800 border border-slate-700 p-5 rounded-xl flex flex-col justify-between hover:border-slate-500 transition">
                         <div class="flex justify-between items-start mb-3">
                             <div class="flex items-center gap-2">
@@ -154,18 +146,13 @@
                         <p class="text-slate-300 mb-1 truncate">📍 ${inc.location}</p>
                         <p class="text-slate-300 mb-1 text-sm">⚠️ Sev: <span class="font-bold text-white">${inc.severity}</span></p>
                         <p class="text-sm mt-2 text-slate-400">Status: <span class="${statusColor} font-bold">${inc.status}</span></p>
-                        
                         <button onclick="openModal('${inc.id}')" class="mt-4 w-full bg-slate-700 hover:bg-slate-600 py-2 rounded transition font-medium text-sm">View Details</button>
-                    </div>
-                `;
-                list.innerHTML += card;
+                    </div>`;
             });
         }
 
         function openModal(incidentId) {
-            const incidents = getIncidents();
-            const inc = incidents.find(i => i.id === incidentId);
-            
+            const inc = getIncidents().find(i => i.id === incidentId);
             if (inc) {
                 document.getElementById('modal-id').innerText = inc.id;
                 document.getElementById('modal-type').innerText = inc.type;
@@ -173,8 +160,8 @@
                 document.getElementById('modal-time').innerText = inc.time;
                 document.getElementById('modal-sev').innerText = inc.severity;
                 document.getElementById('modal-desc').innerText = inc.description;
-                
                 document.getElementById('modal-name').innerText = inc.reporterName || 'Anonymous';
+                
                 const phoneEl = document.getElementById('modal-phone');
                 phoneEl.innerText = inc.reporterPhone || 'N/A';
                 phoneEl.href = inc.reporterPhone ? 'tel:' + inc.reporterPhone : '#';
@@ -183,28 +170,18 @@
                 statusEl.innerText = inc.status;
                 statusEl.className = inc.status === 'Resolved' ? 'text-green-400 font-bold' : 'text-yellow-400 font-bold';
 
-                // Handle Photos Injection
                 const photoContainerWrapper = document.getElementById('modal-photos-container');
                 const photoGrid = document.getElementById('modal-photos');
-                
                 if (inc.photos && inc.photos.length > 0) {
-                    photoGrid.innerHTML = inc.photos.map(base64Str => `
-                        <img src="${base64Str}" alt="Evidence" class="w-full h-32 object-cover rounded-lg border border-slate-600 shadow-md cursor-pointer" onclick="window.open('${base64Str}')">
-                    `).join('');
+                    photoGrid.innerHTML = inc.photos.map(b64 => `<img src="${b64}" class="w-full h-32 object-cover rounded-lg border border-slate-600">`).join('');
                     photoContainerWrapper.classList.remove('hidden');
                 } else {
-                    photoGrid.innerHTML = '';
                     photoContainerWrapper.classList.add('hidden');
                 }
-
                 document.getElementById('incident-modal').classList.remove('hidden');
             }
         }
-
-        function closeModal() {
-            document.getElementById('incident-modal').classList.add('hidden');
-        }
-
+        function closeModal() { document.getElementById('incident-modal').classList.add('hidden'); }
         document.addEventListener('DOMContentLoaded', renderIncidents);
     </script>
 </body>
