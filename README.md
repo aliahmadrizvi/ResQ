@@ -42,19 +42,15 @@ Because this project requires no backend or build tools, running it is instantan
 
 ### Snowflake Cortex chat backend
 
-The Cortex chat widget needs the Node.js bridge running separately. Set the Snowflake connection values in your shell (do not put credentials in source files), then start the bridge from the repository root:
+The Cortex chat widget needs the Node.js bridge running separately. Copy `.env.example` to `.env`, enter your Snowflake connection values in `.env` (it is ignored by Git), then start the bridge from the repository root:
 
 ```powershell
-$env:SNOWFLAKE_ACCOUNT = "your-account-identifier"
-$env:SNOWFLAKE_USER = "your-user"
-$env:SNOWFLAKE_PASSWORD = "your-password"
-$env:SNOWFLAKE_WAREHOUSE = "your-warehouse"
-$env:SNOWFLAKE_DATABASE = "your-database"
-$env:SNOWFLAKE_SCHEMA = "PUBLIC"
+Copy-Item .env.example .env
+# Edit .env and fill in your Snowflake account, user, and password.
 npm start
 ```
 
-Optionally set `SNOWFLAKE_ROLE` and `SNOWFLAKE_CORTEX_MODEL`. The bridge exposes `/api/health` to report whether Snowflake is connected. The chat uses `http://localhost:3000` by default, so open the frontend on the same computer.
+Optionally set `SNOWFLAKE_ROLE` and `SNOWFLAKE_CORTEX_MODEL`. The bridge exposes `/api/health` to report whether Snowflake is connected. The chat uses `http://localhost:3001` by default, so open the frontend on the same computer. Set `window.RESQ_API_BASE` before `app.js` if you use a different backend host or port.
 
 ### 🔐 Demo Credentials
 

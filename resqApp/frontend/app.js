@@ -1,6 +1,8 @@
 // ==========================================
 // 1. YOUR FIREBASE CONFIG (Get this from Firebase Console -> Project Settings -> General -> Your Apps)
 // ==========================================
+window.RESQ_API_BASE = window.RESQ_API_BASE || 'http://localhost:3001';
+
 function initializeResponsiveNavigation() {
     const toggle = document.getElementById('nav-toggle');
     const links = document.getElementById('primary-nav-links');
@@ -52,6 +54,7 @@ db.collection("incidents").orderBy("timestamp", "desc").onSnapshot((snapshot) =>
     // Auto-refresh UI functions if they exist on the current page
     if (typeof renderIncidents === "function") renderIncidents();
     if (typeof loadIncidents === "function") loadIncidents();
+    if (typeof window.renderIncidentMap === "function") window.renderIncidentMap();
     if (typeof updateDashboardStats === "function") updateDashboardStats();
 });
 
@@ -268,7 +271,7 @@ async function sendAIChatMessage() {
 
     try {
         // 2. Send message to your live backend server connected to Snowflake
-        const response = await fetch('http://localhost:3000/api/chat', {
+        const response = await fetch(`${window.RESQ_API_BASE}/api/chat`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ message: userText })

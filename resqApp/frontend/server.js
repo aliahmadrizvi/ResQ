@@ -1,9 +1,20 @@
 const express = require('express');
 const snowflake = require('snowflake-sdk');
 const cors = require('cors');
+const path = require('path');
+
+// Load developer-local settings when running the bridge directly from this repo.
+// process.loadEnvFile is built into current supported Node.js releases.
+if (typeof process.loadEnvFile === 'function') {
+    try {
+        process.loadEnvFile(path.resolve(__dirname, '../../.env'));
+    } catch (err) {
+        if (err.code !== 'ENOENT') throw err;
+    }
+}
 
 const app = express();
-const port = Number(process.env.PORT || 3000);
+const port = Number(process.env.PORT || 3001);
 const maxMessageLength = 2000;
 
 app.use(cors());

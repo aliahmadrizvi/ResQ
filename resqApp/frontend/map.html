@@ -9,6 +9,13 @@
     <!-- 👉 PASTE THESE TWO LINES IN THE HEAD OF EVERY HTML FILE -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+    <style>
+        #incident-map { height: min(68vh, 760px); min-height: 380px; width: 100%; background: #0f172a; }
+        .leaflet-popup-content-wrapper, .leaflet-popup-tip { background: #1e293b; color: #f8fafc; }
+        .leaflet-popup-content { margin: 12px 14px; }
+        @media (max-width: 640px) { #incident-map { height: 55vh; min-height: 320px; } }
+    </style>
     <style>
         #primary-nav-links.nav-collapsed { display: none; }
         @media (min-width: 768px) { #primary-nav-links.nav-collapsed { display: grid; } }
@@ -36,26 +43,97 @@
 
     <main class="flex-1 min-w-0 p-4 sm:p-6 relative flex flex-col min-h-[70vh] md:min-h-[600px]">
         <header class="mb-4">
-            <h2 class="text-2xl sm:text-3xl font-semibold">Incident Map</h2>
-            <p class="text-slate-400 mt-1">Spatial view of active alerts and infrastructure.</p>
+            <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+                <div><p class="text-red-400 text-xs font-bold uppercase tracking-[0.18em] mb-2">Live operations</p><h2 class="text-2xl sm:text-3xl font-semibold">Incident Map</h2><p class="text-slate-400 mt-1">New reports and status changes appear here automatically.</p></div>
+                <div class="inline-flex items-center gap-2 text-sm text-slate-400"><span class="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span><span id="map-update-status">Connecting to incident feed…</span></div>
+            </div>
         </header>
 
-        <div class="flex-1 w-full bg-slate-800 rounded-xl border border-slate-700 overflow-hidden shadow-inner p-1">
-            <iframe 
-                width="100%" 
-                height="100%" 
-                style="border:0; min-height: 55vh; border-radius: 0.5rem;"
-                src="https://maps.google.com/maps?width=100%25&amp;height=600&amp;hl=en&amp;q=Integral%20University,%20Lucknow&amp;t=&amp;z=15&amp;ie=UTF8&amp;iwloc=B&amp;output=embed" 
-                allowfullscreen 
-                loading="lazy">
-            </iframe>
+        <div class="grid flex-1 min-h-0 grid-cols-1 xl:grid-cols-[minmax(0,1fr)_320px] gap-4">
+            <div class="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden shadow-xl p-1"><div id="incident-map" class="rounded-lg" role="application" aria-label="Map of active emergency reports"></div></div>
+            <aside class="rounded-xl border border-slate-700 bg-slate-800/80 p-4 sm:p-5 xl:max-h-[68vh] xl:overflow-y-auto" aria-labelledby="map-incident-title">
+                <div class="flex items-center justify-between mb-4"><div><h3 id="map-incident-title" class="font-semibold">Active reports</h3><p class="text-xs text-slate-400 mt-1"><span id="map-incident-count">0</span> incidents</p></div><a href="report.html" class="rounded-lg bg-red-600 hover:bg-red-500 px-3 py-2 text-xs font-semibold transition">＋ Report</a></div>
+                <div id="map-incident-list" class="space-y-2"><p class="text-sm text-slate-400">Loading live reports…</p></div>
+                <p id="map-location-note" class="hidden mt-4 rounded-lg border border-amber-500/20 bg-amber-500/10 p-3 text-xs leading-relaxed text-amber-200"></p>
+            </aside>
         </div>
     </main>
 
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script src="app.js"></script>
-    <script type="module">
-  import { db } from './firebase-config.js';
-  // Ab aap yahan Firestore se data save ya read kar sakte hain!
-</script>
+    <script>
+        const incidentMap = L.map('incident-map', { scrollWheelZoom: false }).setView([20, 0], 2);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(incidentMap);
+        const incidentMarkers = L.layerGroup().addTo(incidentMap);
+        const escapeMapHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
+
+        function getIncidentCoordinates(incident) {
+            let latitude = Number(incident.latitude ?? incident.lat);
+            let longitude = Number(incident.longitude ?? incident.lng ?? incident.lon);
+            if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+                const match = String(incident.location || '').match(/lat(?:itude)?\s*[:=]\s*(-?\d+(?:\.\d+)?)[\s\S]*?lng(?:itude)?\s*[:=]\s*(-?\d+(?:\.\d+)?)/i);
+                if (match) { latitude = Number(match[1]); longitude = Number(match[2]); }
+            }
+            return Number.isFinite(latitude) && Number.isFinite(longitude) && Math.abs(latitude) <= 90 && Math.abs(longitude) <= 180 ? [latitude, longitude] : null;
+        }
+
+        window.renderIncidentMap = function () {
+            const incidents = getIncidents();
+            const activeIncidents = incidents.filter(incident => incident.status !== 'Resolved');
+            incidentMarkers.clearLayers();
+            const located = [];
+            let withoutLocation = 0;
+
+            activeIncidents.forEach(incident => {
+                const coordinates = getIncidentCoordinates(incident);
+                if (!coordinates) { withoutLocation++; return; }
+                located.push(coordinates);
+                const critical = incident.severity === 'Critical';
+                const marker = L.circleMarker(coordinates, {
+                    radius: critical ? 10 : 8,
+                    color: critical ? '#fecaca' : '#fed7aa',
+                    weight: 2,
+                    fillColor: critical ? '#dc2626' : '#f97316',
+                    fillOpacity: 0.9
+                }).addTo(incidentMarkers);
+                marker.bindPopup(`<strong>${escapeMapHtml(incident.type || 'Emergency')}</strong><br>${escapeMapHtml(incident.location || 'Location unavailable')}<br><span>${escapeMapHtml(incident.status || 'New')} · ${escapeMapHtml(incident.id || '')}</span>`);
+            });
+
+            document.getElementById('map-incident-count').textContent = activeIncidents.length;
+            document.getElementById('map-update-status').textContent = 'Live · updates automatically';
+            const list = document.getElementById('map-incident-list');
+            list.innerHTML = activeIncidents.length ? activeIncidents.slice(0, 30).map((incident, index) => {
+                const coords = getIncidentCoordinates(incident);
+                const color = incident.severity === 'Critical' ? 'text-red-300' : 'text-amber-300';
+                return `<button type="button" data-map-index="${index}" class="w-full text-left rounded-lg border border-slate-700 bg-slate-900/60 p-3 hover:border-slate-500 transition"><span class="flex items-center justify-between gap-2"><strong class="truncate text-sm">${escapeMapHtml(incident.type || 'Emergency')}</strong><span class="shrink-0 text-[11px] ${color}">${escapeMapHtml(incident.severity || 'Report')}</span></span><span class="block truncate text-xs text-slate-400 mt-1">${escapeMapHtml(incident.location || 'Location unavailable')}</span><span class="block text-[11px] text-slate-500 mt-1">${escapeMapHtml(incident.id || '')}${coords ? ' · Map location available' : ' · GPS needed for map pin'}</span></button>`;
+            }).join('') : '<div class="rounded-lg border border-dashed border-slate-700 p-5 text-center"><p class="text-2xl mb-2">🛟</p><p class="text-sm text-slate-300">No active incidents</p><p class="text-xs text-slate-500 mt-1">New reports will appear here.</p></div>';
+
+            list.querySelectorAll('[data-map-index]').forEach(button => button.addEventListener('click', () => {
+                const incident = activeIncidents[Number(button.dataset.mapIndex)];
+                const coordinates = incident && getIncidentCoordinates(incident);
+                if (!coordinates) return;
+                incidentMap.setView(coordinates, 15);
+                incidentMarkers.eachLayer(marker => {
+                    if (marker.getLatLng().lat === coordinates[0] && marker.getLatLng().lng === coordinates[1]) marker.openPopup();
+                });
+            }));
+
+            const note = document.getElementById('map-location-note');
+            if (withoutLocation) {
+                note.textContent = `${withoutLocation} active report${withoutLocation === 1 ? '' : 's'} ${withoutLocation === 1 ? 'has' : 'have'} no GPS coordinates, so ${withoutLocation === 1 ? 'its location is' : 'their locations are'} shown in the list but cannot be pinned. Use the GPS button when reporting to add a map pin.`;
+                note.classList.remove('hidden');
+            } else {
+                note.classList.add('hidden');
+            }
+
+            if (located.length === 1) incidentMap.setView(located[0], 13);
+            else if (located.length > 1) incidentMap.fitBounds(located, { padding: [36, 36], maxZoom: 14 });
+        };
+        window.renderIncidentMap();
+        setTimeout(() => incidentMap.invalidateSize(), 100);
+    </script>
 </body>
 </html>
