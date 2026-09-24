@@ -1,8 +1,7 @@
-// ==========================================
-// 1. YOUR FIREBASE CONFIG (Get this from Firebase Console -> Project Settings -> General -> Your Apps)
-// ==========================================
+
+const isLocalFrontend = ['localhost', '127.0.0.1', '[::1]'].includes(window.location.hostname);
 window.RESQ_API_BASE = window.RESQ_API_BASE || (
-    window.location.port === '3001' ? window.location.origin : 'http://[::1]:3001'
+    isLocalFrontend && window.location.port ? window.location.origin : 'http://[::1]:3002'
 );
 
 function initializeResponsiveNavigation() {
@@ -40,13 +39,10 @@ if (!firebase.apps.length) {
 }
 const db = firebase.firestore();
 
-// ==========================================
-// 2. GLOBAL DATA & REAL-TIME CLOUD LISTENER
-// ==========================================
+
 let globalIncidents = [];
 
-// This listens to the database live. When a citizen reports an emergency, 
-// it downloads the new list automatically without refreshing the page!
+
 db.collection("incidents").orderBy("timestamp", "desc").onSnapshot((snapshot) => {
     globalIncidents = [];
     snapshot.forEach((doc) => {
@@ -84,9 +80,6 @@ function updateStatus(id, newStatus) {
     .catch(err => console.error("Error updating:", err));
 }
 
-// ==========================================
-// 3. ROLE SECURITY & SYSTEM RESET
-// ==========================================
 function enforceRoleAccess() {
     const role = localStorage.getItem('resq_role') || 'citizen'; 
     const responderLink = document.getElementById('nav-responder');
@@ -105,7 +98,7 @@ function enforceRoleAccess() {
 
 document.addEventListener('DOMContentLoaded', enforceRoleAccess);
 
-// Optional: Wipe cloud database if needed
+
 async function clearSystemData() {
     if(confirm("⚠️ Delete all cloud records permanently?")) {
         const snapshot = await db.collection('incidents').get();
@@ -116,8 +109,8 @@ async function clearSystemData() {
         window.location.href = 'index.html';
     }
 }
-// ❄️ SNOWFLAKE CORTEX AI WIDGET (100% SNOWFLAKE DATA CLOUD)
-// ==========================================
+
+
 document.addEventListener("DOMContentLoaded", () => {
     // Prevent duplicates
     const existing = document.getElementById('resq-ai-chat');

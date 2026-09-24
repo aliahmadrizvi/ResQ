@@ -226,7 +226,7 @@
     btn.disabled = true;
 
     try {
-        // Calls your local Node.js + Snowflake endpoint
+        
         const response = await fetch('http://localhost:3000/api/translate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -248,8 +248,8 @@
     } catch (error) {
         console.error("Snowflake connection failed:", error);
         
-        // Safety Fallback for Hackathon Demo: 
-        // If your Node backend crashes during the live pitch, this ensures the UI still works
+        
+        
         descEl.innerHTML = `
             <strong class="text-green-400 font-sans not-italic">Translated (Demo Fallback):</strong> 
             <span class="text-white not-italic leading-relaxed">Emergency collision reported at this location. Please dispatch medical and fire immediately.</span><br><br>
@@ -262,7 +262,7 @@
     </script>
     <script type="module">
   import { db } from './firebase-config.js';
-  // Ab aap yahan Firestore se data save ya read kar sakte hain!
+  
 </script>
 </body>
 </html>

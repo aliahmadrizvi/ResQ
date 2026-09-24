@@ -3,7 +3,7 @@ const snowflake = require('snowflake-sdk');
 const cors = require('cors');
 const path = require('path');
 
-// Load developer-local settings when running the bridge directly from this repo.
+
 if (typeof process.loadEnvFile === 'function') {
     try {
         process.loadEnvFile(path.resolve(__dirname, '../../.env'));
@@ -13,7 +13,7 @@ if (typeof process.loadEnvFile === 'function') {
 }
 
 const app = express();
-const port = Number(process.env.PORT || 3001);
+const port = Number(process.env.PORT || 3002);
 const maxMessageLength = 2000;
 
 app.use(cors());
@@ -29,7 +29,9 @@ const normalizeAccount = (value = '') => value
 const config = {
     account: normalizeAccount(process.env.SNOWFLAKE_ACCOUNT),
     username: process.env.SNOWFLAKE_USER?.trim(),
+    authenticator: process.env.SNOWFLAKE_AUTHENTICATOR?.trim().toUpperCase() || 'SNOWFLAKE',
     password: process.env.SNOWFLAKE_PASSWORD,
+    token: process.env.SNOWFLAKE_TOKEN?.trim(),
     warehouse: process.env.SNOWFLAKE_WAREHOUSE?.trim(),
     database: process.env.SNOWFLAKE_DATABASE?.trim(),
     schema: process.env.SNOWFLAKE_SCHEMA?.trim() || 'PUBLIC',
@@ -37,8 +39,11 @@ const config = {
     model: process.env.SNOWFLAKE_CORTEX_MODEL?.trim() || 'llama3.1-70b'
 };
 
-const missingConfig = ['account', 'username', 'password', 'warehouse', 'database']
-    .filter((key) => !config[key]);
+const usesPat = config.authenticator === 'PROGRAMMATIC_ACCESS_TOKEN';
+const missingConfig = [
+    ...['account', 'username', 'warehouse', 'database'].filter((key) => !config[key]),
+    ...(usesPat ? (config.token ? [] : ['token']) : (config.password ? [] : ['password']))
+];
 let connection;
 let connectionState = missingConfig.length ? 'not_configured' : 'connecting';
 let connectionError = null;
@@ -64,7 +69,8 @@ function connectToSnowflake() {
     const nextConnection = snowflake.createConnection({
         account: config.account,
         username: config.username,
-        password: config.password,
+        authenticator: config.authenticator,
+        ...(usesPat ? { token: config.token } : { password: config.password }),
         warehouse: config.warehouse,
         database: config.database,
         schema: config.schema,
@@ -90,7 +96,7 @@ function connectToSnowflake() {
 
 if (missingConfig.length) {
     console.error(`Snowflake is not configured. Set: ${missingConfig.map((key) => ({
-        account: 'SNOWFLAKE_ACCOUNT', username: 'SNOWFLAKE_USER', password: 'SNOWFLAKE_PASSWORD',
+        account: 'SNOWFLAKE_ACCOUNT', username: 'SNOWFLAKE_USER', password: 'SNOWFLAKE_PASSWORD', token: 'SNOWFLAKE_TOKEN',
         warehouse: 'SNOWFLAKE_WAREHOUSE', database: 'SNOWFLAKE_DATABASE'
     })[key]).join(', ')}`);
 } else {
@@ -124,4 +130,38 @@ app.post('/api/translate', (req, res) => {
             res.json({ translation: result });
         }
     });
+});
+
+app.post('/api/chat', (req, res) => {
+    const message = typeof req.body?.message === 'string' ? req.body.message.trim() : '';
+    if (!message) return res.status(400).json({ error: 'Message is required.' });
+    if (message.length > maxMessageLength) {
+        return res.status(413).json({ error: `Message must be ${maxMessageLength} characters or fewer.` });
+    }
+    if (connectionState !== 'connected' || !connection) {
+        const detail = connectionError ? `: ${connectionError}` : '.';
+        return res.status(503).json({ error: `Snowflake is ${connectionState}${detail}` });
+    }
+
+    const prompt = `You are a helpful emergency response assistant for ResQ. Give concise, safe instructions for this situation: ${message}`;
+    connection.execute({
+        sqlText: 'SELECT SNOWFLAKE.CORTEX.COMPLETE(?, ?) AS REPLY',
+        binds: [config.model, prompt],
+        complete: (err, _statement, rows) => {
+            if (err) {
+                console.error(`Snowflake Cortex query failed${err.code ? ` (${err.code})` : ''}: ${err.message}`);
+                return res.status(502).json({ error: `Cortex query failed${err.code ? ` (${err.code})` : ''}: ${err.message}` });
+            }
+
+            const reply = rows?.[0]?.REPLY ?? rows?.[0]?.reply;
+            if (typeof reply !== 'string' || !reply.trim()) {
+                return res.status(502).json({ error: 'Snowflake returned an empty response.' });
+            }
+            res.json({ reply });
+        }
+    });
+});
+
+app.listen(port, () => {
+    console.log(`ResQ Snowflake backend listening on http://localhost:${port}.`);
 });
