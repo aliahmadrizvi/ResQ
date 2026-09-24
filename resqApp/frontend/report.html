@@ -99,7 +99,7 @@
             </form>
             
             <div id="success-message" class="hidden mt-6 bg-green-900/50 border border-green-500 text-green-300 p-4 rounded-lg text-center font-medium">
-                Emergency reported! Ref ID: <span id="generated-id" class="font-bold text-white"></span>. Redirecting...
+                <span id="success-message-text">Emergency reported! Ref ID: <span id="generated-id" class="font-bold text-white"></span>. Redirecting...</span>
             </div>
         </div>
     </main>
@@ -191,18 +191,29 @@
             submitBtn.classList.replace('bg-red-600', 'bg-slate-600');
 
             try {
+                const reporterName = document.getElementById('reporter-name')?.value || 'Anonymous';
+                const reporterPhone = document.getElementById('reporter-phone')?.value || '';
                 const reportDetails = {
                     type: document.getElementById('type').value,
                     location: document.getElementById('location').value,
+                    reporterName,
+                    reporterPhone,
                     ...(reportCoordinates || {})
                 };
+                const reporterId = await createReporterIdentity(reporterName, reporterPhone);
                 const duplicate = await findActiveDuplicateIncident(reportDetails);
                 if (duplicate) {
-                    submitBtn.innerText = "🚨 Submit Emergency";
-                    submitBtn.disabled = false;
-                    submitBtn.classList.replace('bg-slate-600', 'bg-red-600');
-                    alert(`A similar ${duplicate.type} incident is already active at this location (ID: ${duplicate.id}). Submit a different emergency or update the existing report.`);
-                    return;
+                    const result = await addReporterToIncident(duplicate, reporterId);
+                    if (!result.resolved) {
+                        document.getElementById('report-form').reset();
+                        document.getElementById('generated-id').textContent = duplicate.id;
+                        document.getElementById('success-message-text').textContent = result.alreadyReported
+                            ? `You already reported this incident. Reported by ${result.count} ${result.count === 1 ? 'person' : 'people'}.`
+                            : `Report added to the existing incident. Reported by ${result.count} ${result.count === 1 ? 'person' : 'people'}. Redirecting...`;
+                        document.getElementById('success-message').classList.remove('hidden');
+                        setTimeout(() => window.location.href = 'incidents.html', 2500);
+                        return;
+                    }
                 }
 
                 // Safely check if inputs exist so it doesn't crash if an ID is missing
@@ -231,9 +242,11 @@
                     severity: document.getElementById('severity').value,
                     status: 'Responder Needed',
                     description: document.getElementById('description').value,
-                    reporterName: document.getElementById('reporter-name') ? document.getElementById('reporter-name').value : 'Anonymous',
-                    reporterPhone: document.getElementById('reporter-phone') ? document.getElementById('reporter-phone').value : '',
-                    photos: photosArray 
+                    reporterName,
+                    reporterPhone,
+                    reporterIds: [reporterId],
+                    reporterCount: 1,
+                    photos: photosArray
                 };
 
                 // Attempt to save to LocalStorage

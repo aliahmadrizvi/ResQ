@@ -93,12 +93,49 @@ async function findActiveDuplicateIncident(incident) {
     const snapshot = await db.collection('incidents').where('type', '==', incident.type).get();
     const normalizedType = normalizeIncidentValue(incident.type);
     const existing = snapshot.docs
-        .map((doc) => doc.data())
+        .map((doc) => ({ ...doc.data(), docRef: doc.ref }))
         .find((item) => item.status !== 'Resolved'
             && normalizeIncidentValue(item.type) === normalizedType
             && sameIncidentLocation(item, incident));
 
     return existing || null;
+}
+
+async function createReporterIdentity(name, phone) {
+    const phoneDigits = String(phone ?? '').replace(/\D/g, '');
+    const identity = phoneDigits.length >= 7
+        ? `phone:${phoneDigits}`
+        : `name:${normalizeIncidentValue(name)}`;
+    const digest = await window.crypto.subtle.digest('SHA-256', new TextEncoder().encode(identity));
+    return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('');
+}
+
+async function addReporterToIncident(incident, reporterId) {
+    const originalReporterId = await createReporterIdentity(incident.reporterName, incident.reporterPhone);
+    return db.runTransaction(async (transaction) => {
+        const snapshot = await transaction.get(incident.docRef);
+        if (!snapshot.exists || snapshot.data().status === 'Resolved') {
+            return { resolved: true };
+        }
+
+        const data = snapshot.data();
+        const reporterIds = new Set(Array.isArray(data.reporterIds) ? data.reporterIds : []);
+        if (reporterIds.size === 0) reporterIds.add(originalReporterId);
+
+        const currentCount = Math.max(Number(data.reporterCount) || 1, reporterIds.size);
+        if (reporterIds.has(reporterId)) {
+            return { count: currentCount, alreadyReported: true };
+        }
+
+        reporterIds.add(reporterId);
+        const count = currentCount + 1;
+        transaction.update(incident.docRef, {
+            reporterIds: Array.from(reporterIds),
+            reporterCount: count,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        return { count, alreadyReported: false };
+    });
 }
 
 // Add a new incident (Called from report.html)
