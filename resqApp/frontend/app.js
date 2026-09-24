@@ -99,18 +99,6 @@ function enforceRoleAccess() {
 document.addEventListener('DOMContentLoaded', enforceRoleAccess);
 
 
-async function clearSystemData() {
-    if(confirm("⚠️ Delete all cloud records permanently?")) {
-        const snapshot = await db.collection('incidents').get();
-        const batch = db.batch();
-        snapshot.docs.forEach((doc) => batch.delete(doc.ref));
-        await batch.commit();
-        alert("Cloud Database Cleared!");
-        window.location.href = 'index.html';
-    }
-}
-
-
 document.addEventListener("DOMContentLoaded", () => {
     // Prevent duplicates
     const existing = document.getElementById('resq-ai-chat');
