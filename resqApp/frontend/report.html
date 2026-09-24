@@ -191,6 +191,20 @@
             submitBtn.classList.replace('bg-red-600', 'bg-slate-600');
 
             try {
+                const reportDetails = {
+                    type: document.getElementById('type').value,
+                    location: document.getElementById('location').value,
+                    ...(reportCoordinates || {})
+                };
+                const duplicate = await findActiveDuplicateIncident(reportDetails);
+                if (duplicate) {
+                    submitBtn.innerText = "🚨 Submit Emergency";
+                    submitBtn.disabled = false;
+                    submitBtn.classList.replace('bg-slate-600', 'bg-red-600');
+                    alert(`A similar ${duplicate.type} incident is already active at this location (ID: ${duplicate.id}). Submit a different emergency or update the existing report.`);
+                    return;
+                }
+
                 // Safely check if inputs exist so it doesn't crash if an ID is missing
                 const p1 = document.getElementById('photo1');
                 const p2 = document.getElementById('photo2');
@@ -210,8 +224,8 @@
                 // Build the object
                 const newIncident = {
                     id: uniqueId,
-                    type: document.getElementById('type').value,
-                    location: document.getElementById('location').value,
+                    type: reportDetails.type,
+                    location: reportDetails.location,
                     ...(reportCoordinates || {}),
                     time: 'Just now',
                     severity: document.getElementById('severity').value,
@@ -223,7 +237,7 @@
                 };
 
                 // Attempt to save to LocalStorage
-                addIncident(newIncident);
+                await addIncident(newIncident);
                 
                 // Success!
                 document.getElementById('report-form').reset();
@@ -235,7 +249,7 @@
             } catch (error) {
                 // If it ACTUALLY fails, print the real error
                 console.error(error);
-                alert("❌ Error: " + error.message + "\n\n(If you see a QuotaExceededError, click Reset Data in the sidebar!)");
+                alert("❌ Error: " + error.message);
                 
                 // Put the button back to normal so you can try again
                 submitBtn.innerText = "🚨 Submit Emergency";

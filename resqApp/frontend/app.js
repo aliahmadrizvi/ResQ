@@ -61,14 +61,52 @@ function getIncidents() {
     return globalIncidents;
 }
 
+function normalizeIncidentValue(value) {
+    return String(value ?? '')
+        .normalize('NFKC')
+        .toLocaleLowerCase()
+        .replace(/[^\p{L}\p{N}]+/gu, ' ')
+        .trim();
+}
+
+function sameIncidentLocation(first, second) {
+    const firstHasCoordinates = Number.isFinite(Number(first.latitude)) && Number.isFinite(Number(first.longitude));
+    const secondHasCoordinates = Number.isFinite(Number(second.latitude)) && Number.isFinite(Number(second.longitude));
+
+    if (firstHasCoordinates && secondHasCoordinates) {
+        const radians = (degrees) => degrees * Math.PI / 180;
+        const latDifference = radians(Number(second.latitude) - Number(first.latitude));
+        const lngDifference = radians(Number(second.longitude) - Number(first.longitude));
+        const lat1 = radians(Number(first.latitude));
+        const lat2 = radians(Number(second.latitude));
+        const value = Math.sin(latDifference / 2) ** 2
+            + Math.cos(lat1) * Math.cos(lat2) * Math.sin(lngDifference / 2) ** 2;
+        const distanceMeters = 6371000 * 2 * Math.atan2(Math.sqrt(value), Math.sqrt(1 - value));
+        return distanceMeters <= 100;
+    }
+
+    const firstLocation = normalizeIncidentValue(first.location);
+    return Boolean(firstLocation && firstLocation === normalizeIncidentValue(second.location));
+}
+
+async function findActiveDuplicateIncident(incident) {
+    const snapshot = await db.collection('incidents').where('type', '==', incident.type).get();
+    const normalizedType = normalizeIncidentValue(incident.type);
+    const existing = snapshot.docs
+        .map((doc) => doc.data())
+        .find((item) => item.status !== 'Resolved'
+            && normalizeIncidentValue(item.type) === normalizedType
+            && sameIncidentLocation(item, incident));
+
+    return existing || null;
+}
+
 // Add a new incident (Called from report.html)
 function addIncident(incident) {
     incident.timestamp = firebase.firestore.FieldValue.serverTimestamp(); 
     
     // Save to Firestore cloud database using the unique RESQ ID as document name
-    db.collection("incidents").doc(incident.id).set(incident)
-    .then(() => console.log("Saved to cloud!"))
-    .catch(err => console.error("Error saving:", err));
+    return db.collection("incidents").doc(incident.id).set(incident);
 }
 
 // Update incident status (Called from responder.html)
