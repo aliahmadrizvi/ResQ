@@ -102,6 +102,7 @@
                 <span id="success-message-text">Emergency reported! Ref ID: <span id="generated-id" class="font-bold text-white"></span>. Redirecting...</span>
             </div>
         </div>
+        <footer class="mt-10 border-t border-slate-800 pt-5 pb-2 text-center text-xs text-slate-500">© 2026 4bitDeveloper · ResQ Emergency Response</footer>
     </main>
 
     <script src="app.js"></script>
@@ -196,6 +197,7 @@
                 const reportDetails = {
                     type: document.getElementById('type').value,
                     location: document.getElementById('location').value,
+                    description: document.getElementById('description').value.trim(),
                     reporterName,
                     reporterPhone,
                     ...(reportCoordinates || {})
@@ -203,7 +205,7 @@
                 const reporterId = await createReporterIdentity(reporterName, reporterPhone);
                 const duplicate = await findActiveDuplicateIncident(reportDetails);
                 if (duplicate) {
-                    const result = await addReporterToIncident(duplicate, reporterId);
+                    const result = await addReporterToIncident(duplicate, reporterId, reportDetails);
                     if (!result.resolved) {
                         document.getElementById('report-form').reset();
                         document.getElementById('generated-id').textContent = duplicate.id;
@@ -241,7 +243,8 @@
                     time: 'Just now',
                     severity: document.getElementById('severity').value,
                     status: 'Responder Needed',
-                    description: document.getElementById('description').value,
+                    description: reportDetails.description,
+                    additionalReports: [],
                     reporterName,
                     reporterPhone,
                     reporterIds: [reporterId],

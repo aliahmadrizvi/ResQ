@@ -41,20 +41,207 @@ const db = firebase.firestore();
 
 
 let globalIncidents = [];
+let incidentSnapshotInitialized = false;
+let responderAudioContext = null;
+let responseAlarmInterval = null;
+let activeResponseAlarmMode = null;
+let responseAlarmSoundTimer = null;
+
+async function playResponderAlert(preview = false) {
+    if (!preview && localStorage.getItem('resq_alert_sound') !== 'on') return false;
+    try {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) return false;
+        if (!responderAudioContext || responderAudioContext.state === 'closed') {
+            responderAudioContext = new AudioContextClass();
+        }
+        if (responderAudioContext.state !== 'running') await responderAudioContext.resume();
+
+        const context = responderAudioContext;
+        const playTone = (frequency, startAt, duration) => {
+            const oscillator = context.createOscillator();
+            const gain = context.createGain();
+            oscillator.type = 'sine';
+            oscillator.frequency.value = frequency;
+            gain.gain.setValueAtTime(0.0001, startAt);
+            gain.gain.exponentialRampToValueAtTime(0.28, startAt + 0.025);
+            gain.gain.exponentialRampToValueAtTime(0.0001, startAt + duration);
+            oscillator.connect(gain);
+            gain.connect(context.destination);
+            oscillator.start(startAt);
+            oscillator.stop(startAt + duration + 0.02);
+        };
+        const startAt = context.currentTime + 0.02;
+        playTone(880, startAt, 0.22);
+        playTone(660, startAt + 0.28, 0.34);
+        return true;
+    } catch (error) {
+        console.warn('Responder alert sound could not play.', error);
+        return false;
+    }
+}
+
+async function playResponseAlarm(isCritical) {
+    if (localStorage.getItem('resq_alert_sound') !== 'on') return false;
+    try {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) return false;
+        if (!responderAudioContext || responderAudioContext.state === 'closed') {
+            responderAudioContext = new AudioContextClass();
+        }
+        if (responderAudioContext.state !== 'running') await responderAudioContext.resume();
+        const context = responderAudioContext;
+        const oscillator = context.createOscillator();
+        const gain = context.createGain();
+        const duration = isCritical ? 0.48 : 0.32;
+        oscillator.type = 'square';
+        oscillator.frequency.value = isCritical ? 1046 : 740;
+        gain.gain.setValueAtTime(0.0001, context.currentTime);
+        gain.gain.exponentialRampToValueAtTime(isCritical ? 0.32 : 0.2, context.currentTime + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + duration);
+        oscillator.connect(gain);
+        gain.connect(context.destination);
+        oscillator.start();
+        oscillator.stop(context.currentTime + duration + 0.02);
+        return true;
+    } catch (error) {
+        console.warn('Response escalation alarm could not play.', error);
+        return false;
+    }
+}
+
+function incidentCreatedAt(incident) {
+    const value = incident.timestamp;
+    const date = value?.toDate ? value.toDate() : value instanceof Date ? value : new Date(value);
+    return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function refreshResponseAlarms() {
+    if (localStorage.getItem('resq_role') !== 'responder') return;
+    const now = Date.now();
+    const waiting = globalIncidents.filter(incident => !['Responding', 'Arrived', 'Resolved'].includes(incident.status))
+        .map(incident => {
+            const createdAt = incidentCreatedAt(incident);
+            if (!createdAt) return null;
+            const critical = incident.severity === 'Critical';
+            const thresholdMs = 5000;
+            return { incident, critical, overdue: now - createdAt.getTime() >= thresholdMs };
+        })
+        .filter(Boolean);
+    const overdue = waiting.filter(item => item.overdue);
+    const banner = document.getElementById('response-alarm-banner');
+    const bannerText = document.getElementById('response-alarm-text');
+    const bannerHelp = document.getElementById('response-alarm-help');
+    if (banner) {
+        const criticalCount = overdue.filter(item => item.critical).length;
+        banner.classList.toggle('hidden', overdue.length === 0);
+        banner.classList.toggle('response-alarm-critical', criticalCount > 0);
+        banner.classList.toggle('response-alarm-standard', overdue.length > 0 && criticalCount === 0);
+        if (bannerText) {
+            bannerText.textContent = criticalCount
+                ? `URGENT: ${criticalCount} critical report${criticalCount === 1 ? '' : 's'} unacknowledged after 5 seconds.`
+                : `${overdue.length} report${overdue.length === 1 ? '' : 's'} unacknowledged after 5 seconds.`;
+        }
+        if (bannerHelp && overdue.length) {
+            bannerHelp.textContent = localStorage.getItem('resq_alert_sound') === 'on'
+                ? 'Accept the incident to acknowledge it and stop the repeating alarm.'
+                : 'Accept the incident to acknowledge it. Enable sound alerts above to hear the repeating beep.';
+        }
+    }
+
+    document.querySelectorAll('[data-incident-id]').forEach(card => {
+        card.classList.remove('response-critical-overdue');
+        const id = card.getAttribute('data-incident-id');
+        if (overdue.some(item => item.critical && String(item.incident.id) === id)) {
+            card.classList.add('response-critical-overdue');
+        }
+    });
+
+    const alarmMode = overdue.some(item => item.critical) ? 'critical' : overdue.length ? 'standard' : null;
+    if (alarmMode === activeResponseAlarmMode) return;
+    activeResponseAlarmMode = alarmMode;
+    if (responseAlarmSoundTimer) {
+        clearInterval(responseAlarmSoundTimer);
+        responseAlarmSoundTimer = null;
+    }
+    if (alarmMode && localStorage.getItem('resq_alert_sound') === 'on') {
+        const isCritical = alarmMode === 'critical';
+        playResponseAlarm(isCritical).then(playing => {
+            if (playing && activeResponseAlarmMode === alarmMode && localStorage.getItem('resq_alert_sound') === 'on') {
+                responseAlarmSoundTimer = setInterval(() => playResponseAlarm(isCritical), isCritical ? 1200 : 2400);
+            }
+        });
+    }
+}
+
+window.toggleResponderAlerts = async function(button) {
+    const enabled = localStorage.getItem('resq_alert_sound') === 'on';
+    const audioUnlocked = responderAudioContext && responderAudioContext.state === 'running';
+    if (enabled && audioUnlocked) {
+        localStorage.setItem('resq_alert_sound', 'off');
+        const alertStatus = document.getElementById('responder-alert-status');
+        if (alertStatus) alertStatus.textContent = 'Sound alerts are off';
+        if (responseAlarmSoundTimer) {
+            clearInterval(responseAlarmSoundTimer);
+            responseAlarmSoundTimer = null;
+        }
+    } else {
+        localStorage.setItem('resq_alert_sound', 'on');
+        const played = await playResponderAlert(true);
+        const alertStatus = document.getElementById('responder-alert-status');
+        if (alertStatus) alertStatus.textContent = played ? 'Sound enabled · test tone played' : 'Sound could not start · check browser audio settings';
+        if (button) button.textContent = played ? '🔔 Sound alerts on' : '🔔 Retry sound setup';
+        activeResponseAlarmMode = null;
+        refreshResponseAlarms();
+    }
+    if (button) {
+        const active = localStorage.getItem('resq_alert_sound') === 'on';
+        button.textContent = active
+            ? responderAudioContext?.state === 'running' ? '🔔 Sound alerts on' : '🔔 Retry sound setup'
+            : '🔕 Enable sound alerts';
+        button.setAttribute('aria-pressed', String(active));
+    }
+};
 
 
 db.collection("incidents").orderBy("timestamp", "desc").onSnapshot((snapshot) => {
+    const newUrgentReports = incidentSnapshotInitialized && localStorage.getItem('resq_role') === 'responder'
+        ? snapshot.docChanges().filter(change => {
+            if (change.type === 'added') return change.doc.data().status !== 'Resolved';
+            if (change.type !== 'modified') return false;
+            const previous = globalIncidents.find(incident => incident.id === change.doc.id);
+            return previous && Number(change.doc.data().reporterCount || 1) > Number(previous.reporterCount || 1);
+        })
+        : [];
     globalIncidents = [];
     snapshot.forEach((doc) => {
-        globalIncidents.push(doc.data());
+        globalIncidents.push({ ...doc.data(), id: doc.id });
     });
+
+    if (newUrgentReports.length) {
+        playResponderAlert();
+        const alertStatus = document.getElementById('responder-alert-status');
+        if (alertStatus) alertStatus.textContent = `${newUrgentReports.length} new report${newUrgentReports.length === 1 ? '' : 's'} · sorted by urgency`;
+    }
+    incidentSnapshotInitialized = true;
     
     // Auto-refresh UI functions if they exist on the current page
     if (typeof renderIncidents === "function") renderIncidents();
     if (typeof loadIncidents === "function") loadIncidents();
     if (typeof window.renderIncidentMap === "function") window.renderIncidentMap();
-    if (typeof updateDashboardStats === "function") updateDashboardStats();
+    if (typeof window.renderAnalytics === "function") window.renderAnalytics();
+    refreshResponseAlarms();
+    const feedStatus = document.getElementById('incident-feed-status');
+    if (feedStatus) feedStatus.textContent = `Live updates connected · ${globalIncidents.length} report${globalIncidents.length === 1 ? '' : 's'} loaded`;
+}, (error) => {
+    console.error('Could not load incident reports:', error);
+    const feedStatus = document.getElementById('incident-feed-status');
+    const incidentList = document.getElementById('incident-list');
+    if (feedStatus) feedStatus.textContent = `Incident feed unavailable: ${error.message || 'Could not connect to Firestore.'}`;
+    if (incidentList) incidentList.innerHTML = '<p class="text-red-300 bg-red-950/40 border border-red-800 rounded-lg p-4">Could not load reports. Check your connection and Firestore access, then refresh this page.</p>';
 });
+
+if (!responseAlarmInterval) responseAlarmInterval = setInterval(refreshResponseAlarms, 1000);
 
 // Fetch all incidents
 function getIncidents() {
@@ -110,7 +297,7 @@ async function createReporterIdentity(name, phone) {
     return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('');
 }
 
-async function addReporterToIncident(incident, reporterId) {
+async function addReporterToIncident(incident, reporterId, report) {
     const originalReporterId = await createReporterIdentity(incident.reporterName, incident.reporterPhone);
     return db.runTransaction(async (transaction) => {
         const snapshot = await transaction.get(incident.docRef);
@@ -129,10 +316,22 @@ async function addReporterToIncident(incident, reporterId) {
 
         reporterIds.add(reporterId);
         const count = currentCount + 1;
-        transaction.update(incident.docRef, {
+        const description = String(report.description || '').trim();
+        const additionalReports = Array.isArray(data.additionalReports) ? data.additionalReports : [];
+        const update = {
             reporterIds: Array.from(reporterIds),
             reporterCount: count,
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+        if (description) {
+            update.additionalReports = [...additionalReports, {
+                description,
+                reporterName: String(report.reporterName || 'Anonymous').trim() || 'Anonymous',
+                createdAt: new Date().toISOString()
+            }];
+        }
+        transaction.update(incident.docRef, {
+            ...update
         });
         return { count, alreadyReported: false };
     });
@@ -148,26 +347,37 @@ function addIncident(incident) {
 
 // Update incident status (Called from responder.html)
 function updateStatus(id, newStatus) {
-    db.collection("incidents").doc(id).update({
+    return db.collection("incidents").doc(id).update({
         status: newStatus
     })
-    .then(() => console.log("Status updated!"))
-    .catch(err => console.error("Error updating:", err));
+    .catch(err => {
+        console.error("Error updating incident status:", err);
+        throw err;
+    });
 }
 
 function enforceRoleAccess() {
     const role = localStorage.getItem('resq_role') || 'citizen'; 
     const responderLink = document.getElementById('nav-responder');
     const reportLink = document.getElementById('nav-report');
+    const analyticsLink = document.getElementById('nav-analytics');
+    const page = window.location.pathname.split('/').pop();
     
     if (role === 'citizen') {
         if (responderLink) responderLink.style.display = 'none';
-        if (window.location.pathname.includes('responder.html')) {
+        if (analyticsLink) analyticsLink.style.display = 'none';
+        if (page === 'responder.html' || page === 'analytics.html') {
             window.location.href = 'index.html';
         }
     } 
     else if (role === 'responder') {
         if (reportLink) reportLink.style.display = 'none';
+        if (page === 'responder.html' || page === 'analytics.html') return;
+        if (page === 'index.html' || page === '') {
+            window.location.href = 'responder.html';
+            return;
+        }
+        if (page === 'report.html') window.location.href = 'responder.html';
     }
 }
 

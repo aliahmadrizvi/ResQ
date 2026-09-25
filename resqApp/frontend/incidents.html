@@ -79,8 +79,17 @@
                     <p><strong class="text-white">📋 Status:</strong> <span id="modal-status" class="font-bold"></span></p>
                     
                     <div class="bg-slate-900 p-4 rounded-lg border border-slate-700 mt-4">
-                        <strong class="text-white block mb-1">Description:</strong>
-                        <span id="modal-desc" class="text-slate-400 italic"></span>
+                        <div class="flex justify-between items-start gap-3 mb-2">
+                            <strong class="text-white block">Description:</strong>
+                            <button id="translate-btn" onclick="translateIncident()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1 rounded shadow-lg transition">
+                                ❄️ Translate
+                            </button>
+                        </div>
+                        <span id="modal-desc" class="text-slate-400 italic block"></span>
+                    </div>
+                    <div id="modal-related-reports-container" class="hidden bg-slate-900/70 p-4 rounded-lg border border-slate-700 mt-4">
+                        <strong class="text-white block mb-2">📝 Other descriptions for this incident</strong>
+                        <ul id="modal-related-reports" class="space-y-3"></ul>
                     </div>
 
                     <!-- PHOTO GALLERY -->
@@ -88,20 +97,12 @@
                         <strong class="text-white block mb-2">📸 Attached Evidence:</strong>
                         <div id="modal-photos" class="grid grid-cols-2 gap-3"></div>
                     </div>
-                    <div class="bg-slate-900 p-4 rounded-lg border border-slate-700 mt-4 relative">
-    <div class="flex justify-between items-start mb-2">
-        <strong class="text-white block">Description:</strong>
-        <button id="translate-btn" onclick="translateIncident()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1 rounded shadow-lg transition">
-            ❄️ Translate
-        </button>
-    </div>
-    <span id="modal-desc" class="text-slate-400 italic block"></span>
-</div>
 
                 </div>
                 <button onclick="closeModal()" class="mt-6 w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-lg transition">Close Details</button>
             </div>
         </div>
+        <footer class="mt-10 border-t border-slate-800 pt-5 pb-2 text-center text-xs text-slate-500">© 2026 4bitDeveloper · ResQ Emergency Response</footer>
     </main>
 
     <script src="app.js"></script>
@@ -185,6 +186,22 @@
                 document.getElementById('modal-time').innerText = inc.time;
                 document.getElementById('modal-sev').innerText = inc.severity;
                 document.getElementById('modal-desc').innerText = inc.description;
+                const relatedReportsContainer = document.getElementById('modal-related-reports-container');
+                const relatedReportsList = document.getElementById('modal-related-reports');
+                relatedReportsList.replaceChildren();
+                (Array.isArray(inc.additionalReports) ? inc.additionalReports : []).forEach((report) => {
+                    const item = document.createElement('li');
+                    item.className = 'border-t border-slate-700 pt-3 first:border-0 first:pt-0';
+                    const reporter = document.createElement('strong');
+                    reporter.className = 'block text-slate-300 text-sm mb-1';
+                    reporter.textContent = `Reported by ${report.reporterName || 'Anonymous'}`;
+                    const description = document.createElement('p');
+                    description.className = 'text-slate-400 italic';
+                    description.textContent = report.description || '';
+                    item.append(reporter, description);
+                    relatedReportsList.appendChild(item);
+                });
+                relatedReportsContainer.classList.toggle('hidden', relatedReportsList.childElementCount === 0);
                 const translateBtn = document.getElementById('translate-btn');
     if (translateBtn) {
         translateBtn.style.display = 'block';

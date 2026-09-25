@@ -42,116 +42,44 @@
     </nav>
 
     <main class="flex-1 min-w-0 p-4 sm:p-6 md:p-10">
-        <div class="max-w-7xl mx-auto">
-            <header class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-8">
-                <div>
-                    <p class="text-red-400 text-xs font-bold uppercase tracking-[0.2em] mb-2">ResQ · Emergency coordination</p>
-                    <h2 id="welcome-title" class="text-3xl sm:text-4xl font-bold tracking-tight">Welcome back</h2>
-                    <p class="text-slate-400 mt-2">Stay informed. Get help moving.</p>
-                </div>
-                <a href="incidents.html" class="text-sm text-slate-300 hover:text-white transition">View incident feed <span aria-hidden="true">→</span></a>
+        <div class="max-w-6xl mx-auto">
+            <header class="mb-8">
+                <p class="text-red-400 text-xs font-bold uppercase tracking-[0.2em] mb-2">ResQ · Citizen help</p>
+                <h2 class="text-3xl sm:text-4xl font-bold tracking-tight">Help starts here.</h2>
+                <p class="text-slate-400 mt-2 max-w-2xl">Report an emergency, find nearby services, or get clear safety steps. You do not need an account to ask for help.</p>
             </header>
 
-            <section class="relative overflow-hidden rounded-2xl border border-red-400/20 bg-gradient-to-br from-red-950 via-slate-800 to-slate-800 p-6 sm:p-9 mb-6 shadow-xl" aria-labelledby="hero-title">
+            <section class="relative overflow-hidden rounded-2xl border border-red-400/20 bg-gradient-to-br from-red-950 via-slate-800 to-slate-800 p-6 sm:p-10 mb-8 shadow-xl" aria-labelledby="report-title">
                 <div class="absolute -right-12 -top-20 h-64 w-64 rounded-full bg-red-500/10 blur-3xl pointer-events-none"></div>
                 <div class="relative max-w-2xl">
-                    <div class="inline-flex items-center gap-2 rounded-full border border-red-300/20 bg-red-950/50 px-3 py-1 text-xs font-medium text-red-200 mb-5">
-                        <span class="h-2 w-2 rounded-full bg-red-400 animate-pulse"></span> Help is one step away
-                    </div>
-                    <h3 id="hero-title" class="text-2xl sm:text-3xl font-bold leading-tight">Need emergency assistance?</h3>
-                    <p class="text-slate-300 mt-3 max-w-xl">Send your location and details to help responders act quickly. For immediate life-threatening danger, call your local emergency number.</p>
-                    <a href="report.html" class="inline-flex items-center justify-center gap-2 mt-6 rounded-lg bg-red-500 hover:bg-red-400 px-5 py-3 font-bold text-white transition shadow-lg shadow-red-950/40">🚨 Report an emergency <span aria-hidden="true">→</span></a>
+                    <div class="inline-flex items-center gap-2 rounded-full border border-red-300/20 bg-red-950/50 px-3 py-1 text-xs font-medium text-red-200 mb-5"><span class="h-2 w-2 rounded-full bg-red-400"></span> Emergency reporting</div>
+                    <h3 id="report-title" class="text-2xl sm:text-3xl font-bold leading-tight">Are you or someone nearby in danger?</h3>
+                    <p class="text-slate-300 mt-3">Share what happened and where. Your report goes to the response team. For immediate life-threatening danger, call your local emergency number now.</p>
+                    <a href="report.html" class="inline-flex items-center justify-center gap-2 mt-6 rounded-lg bg-red-500 hover:bg-red-400 px-5 py-3 font-bold text-white transition shadow-lg shadow-red-950/40">🚨 Make an emergency report <span aria-hidden="true">→</span></a>
                 </div>
             </section>
 
-            <section class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8" aria-label="Incident overview">
-                <article class="rounded-xl border border-slate-700 bg-slate-800/80 p-5">
-                    <div class="flex items-center justify-between"><p class="text-sm text-slate-400">Active incidents</p><span class="text-lg">🚨</span></div>
-                    <p id="active-count" class="mt-3 text-3xl font-bold text-red-300">—</p>
-                    <p class="mt-1 text-xs text-slate-500">Awaiting resolution</p>
-                </article>
-                <article class="rounded-xl border border-slate-700 bg-slate-800/80 p-5">
-                    <div class="flex items-center justify-between"><p class="text-sm text-slate-400">Needs response</p><span class="text-lg">📡</span></div>
-                    <p id="unassigned-count" class="mt-3 text-3xl font-bold text-amber-300">—</p>
-                    <p class="mt-1 text-xs text-slate-500">New reports needing attention</p>
-                </article>
-                <article class="rounded-xl border border-slate-700 bg-slate-800/80 p-5">
-                    <div class="flex items-center justify-between"><p class="text-sm text-slate-400">Resolved today</p><span class="text-lg">✅</span></div>
-                    <p id="resolved-count" class="mt-3 text-3xl font-bold text-emerald-300">—</p>
-                    <p class="mt-1 text-xs text-slate-500">Completed responses</p>
-                </article>
+            <section aria-labelledby="help-options-title" class="mb-8">
+                <div class="mb-4"><h3 id="help-options-title" class="text-xl font-semibold">What do you need right now?</h3><p class="text-sm text-slate-400 mt-1">Choose the fastest next step for your situation.</p></div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <a href="guide.html" class="group rounded-xl border border-slate-700 bg-slate-800/70 p-5 hover:border-blue-400/60 hover:bg-slate-800 transition"><span class="grid h-12 w-12 place-items-center rounded-xl bg-blue-500/10 text-2xl mb-4">🧭</span><strong class="block text-lg">What should I do?</strong><span class="block text-sm text-slate-400 mt-2">Open simple safety steps for fires, accidents, medical emergencies, and more.</span><span class="inline-block text-blue-300 text-sm mt-4">Browse safety guides →</span></a>
+                    <a href="nearby.html" class="group rounded-xl border border-slate-700 bg-slate-800/70 p-5 hover:border-emerald-400/60 hover:bg-slate-800 transition"><span class="grid h-12 w-12 place-items-center rounded-xl bg-emerald-500/10 text-2xl mb-4">🏥</span><strong class="block text-lg">Find help nearby</strong><span class="block text-sm text-slate-400 mt-2">Look for hospitals, police stations, and other essential services around you.</span><span class="inline-block text-emerald-300 text-sm mt-4">Find nearby services →</span></a>
+                    <a href="map.html" class="group rounded-xl border border-slate-700 bg-slate-800/70 p-5 hover:border-violet-400/60 hover:bg-slate-800 transition"><span class="grid h-12 w-12 place-items-center rounded-xl bg-violet-500/10 text-2xl mb-4">🗺️</span><strong class="block text-lg">See the live map</strong><span class="block text-sm text-slate-400 mt-2">View reported incidents and nearby emergency locations on a map.</span><span class="inline-block text-violet-300 text-sm mt-4">Open the map →</span></a>
+                </div>
             </section>
 
-            <div class="grid grid-cols-1 lg:grid-cols-[1.5fr_1fr] gap-6">
-                <section class="rounded-xl border border-slate-700 bg-slate-800/70 p-5 sm:p-6" aria-labelledby="recent-title">
-                    <div class="flex items-center justify-between gap-3 mb-5">
-                        <div><h3 id="recent-title" class="text-lg font-semibold">Recent incidents</h3><p class="text-sm text-slate-400 mt-1">Latest reports from your community</p></div>
-                        <a href="incidents.html" class="text-sm text-blue-300 hover:text-blue-200">See all</a>
-                    </div>
-                    <div id="recent-incidents" class="space-y-3" aria-live="polite"><p class="text-sm text-slate-400 py-4">Loading incident activity…</p></div>
-                </section>
-
-                <section aria-labelledby="shortcuts-title">
-                    <h3 id="shortcuts-title" class="text-lg font-semibold mb-4">Quick access</h3>
-                    <div class="grid gap-3">
-                        <a href="guide.html" class="group flex items-center gap-4 rounded-xl border border-slate-700 bg-slate-800/70 p-4 hover:border-blue-400/50 hover:bg-slate-800 transition">
-                            <span class="grid h-11 w-11 shrink-0 place-items-center rounded-lg bg-blue-500/10 text-xl">🧭</span><span class="min-w-0 flex-1"><strong class="block">Emergency guide</strong><span class="text-sm text-slate-400">Practical steps for common emergencies</span></span><span class="text-slate-500 group-hover:text-white">→</span>
-                        </a>
-                        <a href="nearby.html" class="group flex items-center gap-4 rounded-xl border border-slate-700 bg-slate-800/70 p-4 hover:border-emerald-400/50 hover:bg-slate-800 transition">
-                            <span class="grid h-11 w-11 shrink-0 place-items-center rounded-lg bg-emerald-500/10 text-xl">📍</span><span class="min-w-0 flex-1"><strong class="block">Nearby help</strong><span class="text-sm text-slate-400">Find hospitals and essential services</span></span><span class="text-slate-500 group-hover:text-white">→</span>
-                        </a>
-                    </div>
-                    <div class="mt-4 rounded-xl border border-slate-700/80 bg-slate-900/60 p-4">
-                        <div class="flex items-center justify-between gap-3"><div><p class="font-medium text-sm">Snowflake assistant</p><p id="assistant-status-text" class="text-xs text-slate-400 mt-1">Checking assistant…</p></div><span id="assistant-status-dot" class="h-2.5 w-2.5 rounded-full bg-slate-500" aria-hidden="true"></span></div>
-                    </div>
-                </section>
-            </div>
+            <section class="rounded-xl border border-slate-700 bg-slate-800/60 p-5 sm:p-6" aria-labelledby="report-steps-title">
+                <h3 id="report-steps-title" class="text-lg font-semibold">What happens after you report?</h3>
+                <ol class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
+                    <li class="flex gap-3"><span class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-red-500/15 text-red-300 font-bold">1</span><span><strong class="block text-sm">Tell us what happened</strong><span class="text-xs text-slate-400">Add the emergency type and a short description.</span></span></li>
+                    <li class="flex gap-3"><span class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-amber-500/15 text-amber-300 font-bold">2</span><span><strong class="block text-sm">Share the location</strong><span class="text-xs text-slate-400">Use GPS or enter a nearby landmark.</span></span></li>
+                    <li class="flex gap-3"><span class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-emerald-500/15 text-emerald-300 font-bold">3</span><span><strong class="block text-sm">Responders review it</strong><span class="text-xs text-slate-400">The response team receives the report and coordinates next steps.</span></span></li>
+                </ol>
+            </section>
+            <footer class="mt-10 border-t border-slate-800 pt-5 pb-2 text-center text-xs text-slate-500">© 2026 4bitDeveloper · ResQ Emergency Response</footer>
         </div>
     </main>
 
     <script src="app.js"></script>
-    <script>
-        const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
-        function updateDashboardStats() {
-            const incidents = getIncidents();
-            const active = incidents.filter(incident => incident.status !== 'Resolved');
-            const today = new Date().toDateString();
-            const resolvedToday = incidents.filter(incident => incident.status === 'Resolved' && incident.timestamp?.toDate?.().toDateString() === today);
-            document.getElementById('active-count').textContent = active.length;
-            document.getElementById('unassigned-count').textContent = incidents.filter(incident => incident.status === 'Responder Needed').length;
-            document.getElementById('resolved-count').textContent = resolvedToday.length;
-
-            const recent = document.getElementById('recent-incidents');
-            if (!incidents.length) {
-                recent.innerHTML = '<div class="rounded-lg border border-dashed border-slate-700 p-5 text-center"><p class="text-2xl mb-2">🛟</p><p class="text-sm text-slate-300">No incident reports yet</p><p class="text-xs text-slate-500 mt-1">New reports will appear here.</p></div>';
-                return;
-            }
-            recent.innerHTML = incidents.slice(0, 4).map(incident => `<a href="incidents.html" class="flex items-center gap-3 rounded-lg border border-slate-700/80 bg-slate-900/50 p-3 hover:border-slate-500 transition"><span class="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-slate-800">${escapeHtml((incident.type || '🚨').split(' ')[0])}</span><span class="min-w-0 flex-1"><strong class="block truncate text-sm">${escapeHtml(incident.type || 'Emergency report')}</strong><span class="block truncate text-xs text-slate-400 mt-1">${escapeHtml(incident.location || 'Location not provided')} · ${escapeHtml(incident.id || '')}</span></span><span class="shrink-0 rounded-full px-2 py-1 text-[11px] ${incident.status === 'Resolved' ? 'bg-emerald-950 text-emerald-300' : 'bg-amber-950 text-amber-300'}">${escapeHtml(incident.status || 'New')}</span></a>`).join('');
-        }
-
-        const hour = new Date().getHours();
-        document.getElementById('welcome-title').textContent = `${hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'}.`;
-        updateDashboardStats();
-
-        const assistantText = document.getElementById('assistant-status-text');
-        const assistantDot = document.getElementById('assistant-status-dot');
-        fetch(`${window.RESQ_API_BASE || 'http://[::1]:3002'}/api/health`)
-            .then(async response => ({ response, data: await response.json() }))
-            .then(({ response, data }) => {
-                if (response.ok && data.status === 'connected') {
-                    assistantText.textContent = 'Snowflake connected · Cortex is ready';
-                    assistantDot.className = 'h-2.5 w-2.5 rounded-full bg-emerald-400';
-                } else {
-                    assistantText.textContent = data.status === 'not_configured'
-                        ? `Add Snowflake settings · ${data.error || ''}`
-                        : `Snowflake connection failed · ${data.error || 'service unavailable'}`;
-                    assistantDot.className = 'h-2.5 w-2.5 rounded-full bg-amber-400';
-                }
-            })
-            .catch(() => {
-                assistantText.textContent = 'Backend offline · Start the server with npm start';
-                assistantDot.className = 'h-2.5 w-2.5 rounded-full bg-red-400';
-            });
-    </script>
 </body>
 </html>

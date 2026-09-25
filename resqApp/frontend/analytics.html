@@ -35,54 +35,80 @@
     </nav>
 
     <main class="flex-1 min-w-0 p-4 sm:p-6 md:p-10">
-        <header class="mb-8 border-b border-slate-700 pb-4">
-            <h2 class="text-2xl sm:text-3xl font-semibold">System Analytics</h2>
-            <p class="text-slate-400 mt-2">Public metrics for response times and incident types (Last 30 Days).</p>
+        <header class="mb-6 border-b border-slate-700 pb-4 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+            <div><h2 class="text-2xl sm:text-3xl font-semibold">Incident Analytics</h2>
+            <p class="text-slate-400 mt-2">Live counts from incident reports. Use the range to compare reporting periods.</p></div>
+            <label class="text-sm text-slate-300">Date range
+                <select id="analytics-range" class="ml-2 bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-white">
+                    <option value="7">Last 7 days</option><option value="30" selected>Last 30 days</option><option value="90">Last 90 days</option><option value="all">All time</option>
+                </select>
+            </label>
         </header>
 
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
-            <div class="bg-slate-800 p-5 rounded-lg border border-slate-700 text-center shadow-lg">
-                <p class="text-4xl font-bold text-white mb-2">142</p>
-                <p class="text-slate-400 text-sm">Total Incidents</p>
-            </div>
-            <div class="bg-slate-800 p-5 rounded-lg border border-slate-700 text-center shadow-lg">
-                <p class="text-4xl font-bold text-green-400 mb-2">98%</p>
-                <p class="text-slate-400 text-sm">Resolution Rate</p>
-            </div>
-            <div class="bg-slate-800 p-5 rounded-lg border border-slate-700 text-center shadow-lg">
-                <p class="text-4xl font-bold text-blue-400 mb-2">5.2m</p>
-                <p class="text-slate-400 text-sm">Avg Response Time</p>
-            </div>
-            <div class="bg-slate-800 p-5 rounded-lg border border-slate-700 text-center shadow-lg">
-                <p class="text-4xl font-bold text-yellow-400 mb-2">14</p>
-                <p class="text-slate-400 text-sm">Active Responders</p>
-            </div>
+        <p id="analytics-updated" class="text-xs text-slate-500 mb-4" aria-live="polite">Loading live incident data…</p>
+        <section class="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-6" aria-label="Incident summary">
+            <article class="bg-slate-800 p-5 rounded-xl border border-slate-700"><p class="text-sm text-slate-400">Reports in range</p><p id="metric-total" class="text-3xl font-bold mt-2">—</p></article>
+            <article class="bg-slate-800 p-5 rounded-xl border border-slate-700"><p class="text-sm text-slate-400">Active unresolved</p><p id="metric-active" class="text-3xl font-bold text-amber-300 mt-2">—</p></article>
+            <article class="bg-slate-800 p-5 rounded-xl border border-slate-700"><p class="text-sm text-slate-400">Resolved in range</p><p id="metric-resolved" class="text-3xl font-bold text-emerald-300 mt-2">—</p></article>
+            <article class="bg-slate-800 p-5 rounded-xl border border-slate-700"><p class="text-sm text-slate-400">Critical / high active</p><p id="metric-urgent" class="text-3xl font-bold text-red-300 mt-2">—</p></article>
+        </section>
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            <section class="bg-slate-800 p-5 sm:p-6 rounded-xl border border-slate-700" aria-labelledby="types-heading">
+                <h3 id="types-heading" class="text-lg font-bold mb-1">Reports by incident type</h3><p class="text-xs text-slate-400 mb-5">Counts reflect the selected date range.</p>
+                <div id="analytics-types" class="space-y-4" aria-live="polite"></div>
+            </section>
+            <section class="bg-slate-800 p-5 sm:p-6 rounded-xl border border-slate-700" aria-labelledby="severity-heading">
+                <h3 id="severity-heading" class="text-lg font-bold mb-1">Open incidents by severity</h3><p class="text-xs text-slate-400 mb-5">Current unresolved incidents, regardless of date range.</p>
+                <div id="analytics-severity" class="grid grid-cols-2 gap-3" aria-live="polite"></div>
+            </section>
         </div>
-
-        <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 mb-8 max-w-3xl shadow-lg">
-            <h3 class="text-xl font-bold mb-6">Incident Type Distribution</h3>
-            <div class="space-y-5">
-                <div>
-                    <div class="flex justify-between text-sm mb-1"><span class="font-medium text-slate-200">Accident (42%)</span><span class="text-slate-400">60 incidents</span></div>
-                    <div class="w-full bg-slate-900 rounded-full h-4 overflow-hidden border border-slate-700"><div class="bg-red-500 h-4 rounded-full" style="width: 42%"></div></div>
-                </div>
-                <div>
-                    <div class="flex justify-between text-sm mb-1"><span class="font-medium text-slate-200">Medical (28%)</span><span class="text-slate-400">40 incidents</span></div>
-                    <div class="w-full bg-slate-900 rounded-full h-4 overflow-hidden border border-slate-700"><div class="bg-blue-500 h-4 rounded-full" style="width: 28%"></div></div>
-                </div>
-                <div>
-                    <div class="flex justify-between text-sm mb-1"><span class="font-medium text-slate-200">Fire (15%)</span><span class="text-slate-400">21 incidents</span></div>
-                    <div class="w-full bg-slate-900 rounded-full h-4 overflow-hidden border border-slate-700"><div class="bg-orange-500 h-4 rounded-full" style="width: 15%"></div></div>
-                </div>
-                <div>
-                    <div class="flex justify-between text-sm mb-1"><span class="font-medium text-slate-200">Road Block (10%)</span><span class="text-slate-400">14 incidents</span></div>
-                    <div class="w-full bg-slate-900 rounded-full h-4 overflow-hidden border border-slate-700"><div class="bg-yellow-500 h-4 rounded-full" style="width: 10%"></div></div>
-                </div>
-            </div>
-        </div>
+        <p class="mt-6 text-xs text-slate-500">Response times and responder headcount are not shown because the incident records do not contain reliable dispatch timestamps or responder assignment data.</p>
+        <footer class="mt-10 border-t border-slate-800 pt-5 pb-2 text-center text-xs text-slate-500">© 2026 4bitDeveloper · ResQ Emergency Response</footer>
     </main>
 
     <script src="app.js"></script>
+    <script>
+        const escapeAnalyticsHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
+        const incidentDate = incident => {
+            const value = incident.timestamp;
+            const date = value?.toDate ? value.toDate() : value instanceof Date ? value : new Date(value);
+            return Number.isNaN(date.getTime()) ? null : date;
+        };
+        window.renderAnalytics = function() {
+            const incidents = getIncidents();
+            const range = document.getElementById('analytics-range').value;
+            const cutoff = range === 'all' ? null : Date.now() - Number(range) * 24 * 60 * 60 * 1000;
+            const eligible = incidents.filter(incident => {
+                const date = incidentDate(incident);
+                return date && (cutoff === null || date.getTime() >= cutoff);
+            });
+            const openIncidents = incidents.filter(incident => incident.status !== 'Resolved');
+            const resolved = eligible.filter(incident => incident.status === 'Resolved').length;
+            const urgent = openIncidents.filter(incident => ['Critical', 'High'].includes(incident.severity)).length;
+            document.getElementById('metric-total').textContent = eligible.length;
+            document.getElementById('metric-active').textContent = openIncidents.length;
+            document.getElementById('metric-resolved').textContent = resolved;
+            document.getElementById('metric-urgent').textContent = urgent;
+            const missingDates = incidents.length - incidents.filter(incident => incidentDate(incident)).length;
+            document.getElementById('analytics-updated').textContent = `Live · ${eligible.length} dated report${eligible.length === 1 ? '' : 's'} in range${missingDates ? ` · ${missingDates} report${missingDates === 1 ? '' : 's'} excluded because the timestamp is missing or invalid` : ''}`;
+
+            const typeCounts = new Map();
+            eligible.forEach(incident => {
+                const type = String(incident.type || 'Unspecified');
+                typeCounts.set(type, (typeCounts.get(type) || 0) + 1);
+            });
+            const typeRows = [...typeCounts.entries()].sort((a, b) => b[1] - a[1]);
+            document.getElementById('analytics-types').innerHTML = typeRows.length ? typeRows.map(([type, count]) => {
+                const percent = eligible.length ? Math.round(count / eligible.length * 100) : 0;
+                return `<div><div class="flex justify-between gap-3 text-sm mb-1"><span class="truncate text-slate-200">${escapeAnalyticsHtml(type)}</span><span class="shrink-0 text-slate-400">${count} · ${percent}%</span></div><div class="h-2 rounded-full bg-slate-900 overflow-hidden"><div class="h-full rounded-full bg-blue-500" style="width:${percent}%"></div></div></div>`;
+            }).join('') : '<p class="text-sm text-slate-400">No dated reports in this range.</p>';
+
+            const severityCounts = ['Critical', 'High', 'Medium', 'Low', 'Unspecified'].map(severity => [severity, openIncidents.filter(incident => (incident.severity || 'Unspecified') === severity).length]);
+            document.getElementById('analytics-severity').innerHTML = severityCounts.map(([severity, count]) => `<div class="rounded-lg border border-slate-700 bg-slate-900/60 p-4"><p class="text-xs text-slate-400">${severity}</p><p class="text-2xl font-bold mt-1">${count}</p></div>`).join('');
+        };
+        document.getElementById('analytics-range').addEventListener('change', window.renderAnalytics);
+        window.renderAnalytics();
+    </script>
     <script type="module">
   import { db } from './firebase-config.js';
   

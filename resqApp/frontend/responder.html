@@ -12,6 +12,12 @@
     <style>
         #primary-nav-links.nav-collapsed { display: none; }
         @media (min-width: 768px) { #primary-nav-links.nav-collapsed { display: grid; } }
+        @keyframes response-alarm-flash { from { background-color: #450a0a; box-shadow: 0 0 0 rgba(248, 113, 113, 0.1); } to { background-color: #b91c1c; box-shadow: 0 0 28px rgba(248, 113, 113, 0.75); } }
+        @keyframes response-card-flash { from { border-color: #7f1d1d; box-shadow: 0 0 0 rgba(248, 113, 113, 0.15); } to { border-color: #f87171; box-shadow: 0 0 24px rgba(248, 113, 113, 0.65); } }
+        .response-alarm-critical { animation: response-alarm-flash 0.7s infinite alternate; }
+        .response-alarm-standard { background-color: #78350f; border-color: #f59e0b; }
+        .response-critical-overdue { animation: response-card-flash 0.7s infinite alternate; }
+        @media (prefers-reduced-motion: reduce) { .response-alarm-critical, .response-critical-overdue { animation: none; outline: 3px solid #f87171; } }
     </style>
 </head>
 <body class="bg-slate-900 text-white min-h-screen flex flex-col md:flex-row overflow-x-hidden">
@@ -22,7 +28,7 @@
             <span>Menu</span><span aria-hidden="true">☰</span>
         </button>
         <ul id="primary-nav-links" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-1 gap-1 md:gap-2 flex-1">
-            <li><a href="index.html" class="block p-2 md:p-3 text-xs sm:text-sm md:text-base hover:bg-slate-700 rounded-lg text-slate-300 transition">🏠 Dashboard</a></li>
+            <li><a href="responder.html" class="block p-2 md:p-3 text-xs sm:text-sm md:text-base hover:bg-slate-700 rounded-lg text-slate-300 transition">🏠 Responder Dashboard</a></li>
             <li id="nav-report"><a href="report.html" class="block p-2 md:p-3 text-xs sm:text-sm md:text-base hover:bg-slate-700 rounded-lg text-slate-300 transition">🚨 Report Emergency</a></li>
             <li><a href="incidents.html" class="block p-2 md:p-3 text-xs sm:text-sm md:text-base hover:bg-slate-700 rounded-lg text-slate-300 transition">📍 Active Incidents</a></li>
             <li id="nav-responder"><a href="responder.html" class="block p-2 md:p-3 text-xs sm:text-sm md:text-base bg-slate-700 rounded-lg text-white font-medium text-red-400">👨‍🚒 Responder Panel</a></li>
@@ -34,29 +40,45 @@
         <button onclick="localStorage.removeItem('resq_role'); window.location.href='login.html'" class="mt-3 md:mt-8 bg-slate-700 hover:bg-red-600 text-white p-2 rounded w-full transition">Switch Role</button>
     </nav>
 
-    <main class="flex-1 min-w-0 p-4 sm:p-6 md:p-10">
-        <header class="mb-6 border-b border-slate-700 pb-4">
-            <h2 class="text-2xl sm:text-3xl font-semibold">Responder Dashboard</h2>
-            <p class="text-slate-400 mt-2">Manage, filter, and update active dispatch tasks.</p>
+    <main class="flex flex-1 min-w-0 flex-col p-4 sm:p-6 md:p-10">
+        <header class="mb-6 border-b border-slate-700 pb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div><h2 class="text-2xl sm:text-3xl font-semibold">Responder Dashboard</h2>
+            <p class="text-slate-400 mt-2">Unacknowledged reports alarm after 5 seconds; critical reports flash and beep more urgently.</p></div>
+            <div class="flex flex-col items-start sm:items-end gap-2"><button id="alert-toggle" type="button" onclick="toggleResponderAlerts(this)" aria-pressed="false" class="bg-amber-600 hover:bg-amber-500 text-white px-4 py-2 rounded-lg font-semibold">🔕 Enable sound alerts</button><p id="responder-alert-status" class="text-xs text-slate-400" aria-live="polite">Sound alerts are off</p></div>
         </header>
 
-        <div class="flex flex-col md:flex-row gap-4 mb-8">
-            <input type="text" id="resp-search" placeholder="Search ID, Location, or type..." class="flex-1 bg-slate-800 border border-slate-700 rounded-lg p-3 text-white focus:ring-2 focus:ring-blue-500 outline-none transition">
-            <div class="flex gap-2 overflow-x-auto pb-2">
-                <button onclick="applyRespFilter('All', this)" class="resp-filter-btn bg-blue-600 text-white border border-blue-500 px-4 py-2 rounded-lg font-medium whitespace-nowrap transition">All</button>
-                <button onclick="applyRespFilter('Responder Needed', this)" class="resp-filter-btn bg-slate-800 text-slate-300 border border-slate-700 px-4 py-2 rounded-lg font-medium whitespace-nowrap transition">New</button>
-                <button onclick="applyRespFilter('Responding', this)" class="resp-filter-btn bg-slate-800 text-slate-300 border border-slate-700 px-4 py-2 rounded-lg font-medium whitespace-nowrap transition">Active</button>
-                <button onclick="applyRespFilter('Critical', this)" class="resp-filter-btn bg-slate-800 text-slate-300 border border-slate-700 px-4 py-2 rounded-lg font-medium whitespace-nowrap transition">Critical</button>
+        <div id="response-alarm-banner" class="hidden mb-6 rounded-xl border-2 border-red-400 p-4 text-white" role="alert" aria-live="assertive">
+            <p id="response-alarm-text" class="font-bold text-lg">Unacknowledged emergency report</p>
+            <p id="response-alarm-help" class="text-sm mt-1">Accept the incident to acknowledge it and stop the alarm.</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-[minmax(16rem,1fr)_auto] gap-3 sm:gap-4 mb-6 sm:mb-8">
+            <input type="search" id="resp-search" placeholder="Search reports by ID, location, or type" aria-label="Search incident reports" class="w-full min-w-0 bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-blue-500 outline-none transition">
+            <div class="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
+                <button onclick="applyRespFilter('All', this)" class="resp-filter-btn bg-blue-600 text-white border border-blue-500 px-4 py-2.5 rounded-xl font-medium transition">All</button>
+                <button onclick="applyRespFilter('Responder Needed', this)" class="resp-filter-btn bg-slate-800 text-slate-300 border border-slate-700 px-4 py-2.5 rounded-xl font-medium transition">New</button>
+                <button onclick="applyRespFilter('Active', this)" class="resp-filter-btn bg-slate-800 text-slate-300 border border-slate-700 px-4 py-2.5 rounded-xl font-medium transition">Active</button>
+                <button onclick="applyRespFilter('Critical', this)" class="resp-filter-btn bg-slate-800 text-slate-300 border border-slate-700 px-4 py-2.5 rounded-xl font-medium transition">Critical</button>
             </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="incident-list"></div>
+        <p id="incident-feed-status" class="text-sm text-slate-400 mb-4" role="status" aria-live="polite">Connecting to live incident reports…</p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-3 gap-4 sm:gap-5 lg:gap-6" id="incident-list"></div>
+        <footer class="mt-auto pt-8 pb-2 text-center text-xs text-slate-500">© 2026 4bitDeveloper · ResQ Emergency Response</footer>
     </main>
 
     <script src="app.js"></script>
     <script>
         let currentRespFilter = 'All';
         let searchRespQuery = '';
+        const escapeRespHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
+
+        const alertToggle = document.getElementById('alert-toggle');
+        if (localStorage.getItem('resq_alert_sound') === 'on') {
+            alertToggle.textContent = '🔔 Tap to test sound';
+            alertToggle.setAttribute('aria-pressed', 'true');
+            document.getElementById('responder-alert-status').textContent = 'Click once to unlock audio for this session';
+        }
 
         document.getElementById('resp-search').addEventListener('input', (e) => {
             searchRespQuery = e.target.value.toLowerCase();
@@ -79,19 +101,32 @@
             list.innerHTML = ''; 
             let incidents = getIncidents().filter(inc => {
                 const searchTxt = searchRespQuery.toLowerCase();
-                const matchesSearch = inc.location.toLowerCase().includes(searchTxt) || 
-                                      inc.type.toLowerCase().includes(searchTxt) ||
-                                      inc.id.toLowerCase().includes(searchTxt);
+                const matchesSearch = String(inc.location || '').toLowerCase().includes(searchTxt) ||
+                                      String(inc.type || '').toLowerCase().includes(searchTxt) ||
+                                      String(inc.id || '').toLowerCase().includes(searchTxt);
                 let matchesFilter = true;
                 if (currentRespFilter !== 'All') {
                     if (currentRespFilter === 'Critical') matchesFilter = inc.severity === 'Critical';
-                    else if (currentRespFilter === 'Responder Needed' || currentRespFilter === 'Responding') matchesFilter = inc.status === currentRespFilter;
+                    else if (currentRespFilter === 'Responder Needed') matchesFilter = inc.status === currentRespFilter;
+                    else if (currentRespFilter === 'Active') matchesFilter = ['Responding', 'Arrived'].includes(inc.status);
                 }
                 return matchesSearch && matchesFilter;
             });
+            const severityRank = { Critical: 4, High: 3, Medium: 2, Low: 1 };
+            const statusRank = { 'Responder Needed': 0, Responding: 1, Arrived: 2, Resolved: 3 };
+            incidents.sort((a, b) => {
+                const resolvedDifference = Number(a.status === 'Resolved') - Number(b.status === 'Resolved');
+                if (resolvedDifference) return resolvedDifference;
+                const priorityDifference = (severityRank[b.severity] || 0) - (severityRank[a.severity] || 0);
+                if (priorityDifference) return priorityDifference;
+                const stageDifference = (statusRank[a.status] ?? 0) - (statusRank[b.status] ?? 0);
+                if (stageDifference) return stageDifference;
+                const timeValue = incident => incident.timestamp?.toDate?.().getTime() || Date.parse(incident.timestamp) || 0;
+                return timeValue(a) - timeValue(b);
+            });
             
             if (incidents.length === 0) {
-                list.innerHTML = `<p class="text-slate-400">No active incidents matching criteria.</p>`;
+                list.innerHTML = `<p class="text-slate-400">No incident reports match these filters.</p>`;
                 return;
             }
 
@@ -110,38 +145,51 @@
                     nextAction = `<button disabled class="w-full mt-4 bg-slate-700 text-slate-400 py-2 rounded font-medium cursor-not-allowed">Incident Closed</button>`;
                 }
 
-                const reporterInfo = inc.reporterName ? `<p class="text-xs text-slate-400 mt-2 border-t border-slate-700 pt-2">👤 ${inc.reporterName} | 📞 <a href="tel:${inc.reporterPhone}" class="text-blue-400 hover:underline">${inc.reporterPhone}</a></p>` : '';
+                const phone = String(inc.reporterPhone || '').replace(/[^\d+]/g, '');
+                const reporterInfo = inc.reporterName ? `<p class="text-xs text-slate-400 mt-2 border-t border-slate-700 pt-2">👤 ${escapeRespHtml(inc.reporterName)}${phone ? ` | 📞 <a href="tel:${phone}" class="text-blue-400 hover:underline">${escapeRespHtml(inc.reporterPhone)}</a>` : ''}</p>` : '';
                 const hasPhotos = (inc.photos && inc.photos.length > 0) ? `<p class="text-xs text-blue-400 mt-1">📸 Evidence Attached</p>` : '';
+                const safeId = escapeRespHtml(inc.id);
+                const safeType = escapeRespHtml(inc.type || 'Emergency report');
+                const safeTime = escapeRespHtml(inc.time || 'Time unavailable');
+                const safeLocation = escapeRespHtml(inc.location || 'Location not provided');
+                const safeSeverity = escapeRespHtml(inc.severity || 'Unspecified');
+                const safeStatus = escapeRespHtml(inc.status || 'Unknown');
+                const safeDescription = escapeRespHtml(inc.description || 'No description provided.');
 
                 list.innerHTML += `
-                    <div class="bg-slate-800 border ${inc.severity === 'Critical' && inc.status !== 'Resolved' ? 'border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.2)]' : 'border-slate-700'} p-5 rounded-xl shadow-lg flex flex-col justify-between">
+                    <div data-incident-id="${safeId}" class="bg-slate-800 border ${inc.severity === 'Critical' && inc.status !== 'Resolved' ? 'border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.2)]' : 'border-slate-700'} p-5 rounded-xl shadow-lg flex flex-col justify-between">
                         <div>
                             <div class="flex justify-between items-start mb-3">
-                                <div class="flex items-center gap-2">
-                                    <h3 class="text-xl font-bold">${inc.type}</h3>
-                                    <span class="bg-slate-900 border border-slate-600 text-[10px] px-2 py-1 rounded text-slate-400 font-mono">${inc.id}</span>
+                                <div class="flex min-w-0 items-center gap-2">
+                                    <h3 class="min-w-0 truncate text-lg sm:text-xl font-bold">${safeType}</h3>
+                                    <span class="shrink-0 bg-slate-900 border border-slate-600 text-[10px] px-2 py-1 rounded text-slate-400 font-mono">${safeId}</span>
                                 </div>
-                                <span class="bg-slate-700 text-xs px-2 py-1 rounded">${inc.time}</span>
+                                <span class="ml-2 shrink-0 bg-slate-700 text-xs px-2 py-1 rounded">${safeTime}</span>
                             </div>
-                            <p class="text-slate-300 text-sm mb-1"><span class="font-bold">📍 Loc:</span> ${inc.location}</p>
-                            <p class="text-slate-300 text-sm mb-1"><span class="font-bold">⚠️ Sev:</span> ${inc.severity}</p>
+                            <p class="text-slate-300 text-sm mb-1"><span class="font-bold">📍 Loc:</span> ${safeLocation}</p>
+                            <p class="text-slate-300 text-sm mb-1"><span class="font-bold">⚠️ Sev:</span> ${safeSeverity}</p>
                             ${hasPhotos}
                             ${reporterInfo}
-                            <p class="text-sm mt-3 text-slate-400 bg-slate-900 p-2 rounded border border-slate-700">"${inc.description}"</p>
+                            <p class="text-sm mt-3 text-slate-400 bg-slate-900 p-2 rounded border border-slate-700">"${safeDescription}"</p>
                         </div>
                         <div class="mt-4 pt-4 border-t border-slate-700">
-                            <p class="text-sm font-bold ${statusColor}">Status: ${inc.status}</p>
+                            <p class="text-sm font-bold ${statusColor}">Status: ${safeStatus}</p>
                             ${nextAction}
                         </div>
                     </div>`;
             });
         }
-        window.handleAction = function(id, newStatus) { updateStatus(id, newStatus); loadIncidents(); }
+        window.handleAction = async function(id, newStatus) {
+            const status = document.getElementById('incident-feed-status');
+            status.textContent = `Updating incident ${id}…`;
+            try {
+                await updateStatus(id, newStatus);
+                status.textContent = `Incident ${id} updated to ${newStatus}.`;
+            } catch (error) {
+                status.textContent = `Could not update incident: ${error.message || 'Check Firestore access and try again.'}`;
+            }
+        };
         document.addEventListener('DOMContentLoaded', loadIncidents);
     </script>
-    <script type="module">
-  import { db } from './firebase-config.js';
-  
-</script>
 </body>
 </html>
